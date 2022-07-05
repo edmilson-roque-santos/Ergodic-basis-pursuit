@@ -1,0 +1,6 @@
+*.pyc
+*.pyc
+*.pyc
+EBP/__pycache__/__init__.cpython-38.pyc
+__pycache__/lab_opto_electronic.cpython-38.pyc
+EBP/__pycache__/net_dyn.cpython-38.pyc
