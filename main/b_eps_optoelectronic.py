@@ -16,7 +16,6 @@ from EBP import tools
 from EBP.base_polynomial import greedy_algorithms as gnr_alg
 
 import lab_opto_electronic as lab_opto
-import pre_process_optoelectronic as prepro
 
 exp_name = "gnr_opto" #"gnr_opto_crossed"
 
@@ -110,12 +109,14 @@ if params['use_orthonormal']:
                                                         lgth_time_series)
         
         if not os.path.isfile(output_orthnormfunc_filename):
+            print("Feature missing on the code.")
+            '''
             prepro.generate_orthonorm_funct(exp_name = orthnorm_folder,
                                             max_deg_monomials = params['max_deg_monomials'],
                                             lgth_time_series = lgth_time_series,
                                             use_single = use_single,
                                             use_crossed_terms = use_crossed_terms)
-            
+            '''
             params['orthnorm_func_filename'] = output_orthnormfunc_filename
         if os.path.isfile(output_orthnormfunc_filename):
             params['orthnorm_func_filename'] = output_orthnormfunc_filename
