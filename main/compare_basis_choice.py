@@ -315,14 +315,14 @@ def ax_plot_true_net(ax, G_true, pos_true, probed_node = 0,
     if plot_net_alone:
         ax.set_title('{}'.format('Original Network'))
 
-def plot_comparison_analysis(ax, exp_dictionary, net_name):    
+def plot_comparison_analysis(ax, exp_dictionary, net_name, plot_legend):    
     
     lgth_vector, FP_comparison, FN_comparison, d_matrix = compare_basis(exp_dictionary, 
                                                                         net_name)
     
-    lab_opto.plot_false_proportion(ax, lgth_vector, FP_comparison, False)
+    lab_opto.plot_false_proportion(ax, lgth_vector, FP_comparison, plot_legend)
     ax.set_ylabel(r'FP')
-    plt.setp(ax.get_xticklabels(), visible=False)
+    plt.setp(ax.get_xticklabels(), visible=True)
     
     #lab_opto.plot_false_proportion(ax[1], lgth_vector, FN_comparison, True)
     #ax[1].set_ylabel(r'FN')
@@ -336,7 +336,7 @@ def plot_lgth_dependence(net_name, exps_dictionary, title, filename = None):
     keys = list(exps_dictionary.keys())
     n_cols = int(len(keys))
     
-    fig_ = plt.figure(figsize = (10, 3), dpi = 300)
+    fig_ = plt.figure(figsize = (11, 3), dpi = 300)
     subfigs = fig_.subfigures(1, 3, width_ratios = [0.9, 1.1, 1.1])
     
     fig = subfigs[0]
@@ -357,7 +357,7 @@ def plot_lgth_dependence(net_name, exps_dictionary, title, filename = None):
                      print_probed = False, plot_net_alone = False)
     
     fig.suptitle(r'a) Original Network') 
-    
+    plot_legend = True
     for id_col in range(n_cols):
         fig1 = subfigs[id_col+1]
         
@@ -365,7 +365,10 @@ def plot_lgth_dependence(net_name, exps_dictionary, title, filename = None):
         exp_dictionary = exps_dictionary[keys[id_col]]
         ax1 = fig1.add_subplot(gs1[0])
         #ax2 = fig1.add_subplot(gs1[1])
-        plot_comparison_analysis(ax1, exp_dictionary, net_name)
+        
+        plot_comparison_analysis(ax1, exp_dictionary, net_name,plot_legend)
+        if plot_legend:
+            plot_legend = False
         fig1.suptitle(title[id_col])
     
     fig_.suptitle('fig')

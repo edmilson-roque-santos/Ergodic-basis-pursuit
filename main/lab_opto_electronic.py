@@ -1278,7 +1278,7 @@ def plot_false_proportion(ax, lgth_vector, f_comp_vec, plot_legend = False):
     if plot_legend:
         #ax.legend(bbox_to_anchor=(0,1.02,1,0.2), loc="lower left",
         #          mode="expand", borderaxespad=0, ncol=3)
-        ax.legend(loc=0)
+        ax.legend(loc=0, fontsize = 16)
         
         
 def plot_interval_intersec(ax, lgth_vector, d_matrix, plot_legend = False): 
