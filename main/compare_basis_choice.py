@@ -419,7 +419,7 @@ def plot_lgth_dependence(net_name, exps_dictionary, title, filename = None):
     n_cols = int(len(keys))
     
     fig_ = plt.figure(figsize = (11, 3), dpi = 300)
-    subfigs = fig_.subfigures(1, 3, width_ratios = [0.9, 1.1, 1.1])
+    subfigs = fig_.subfigures(1, 2, width_ratios = [0.9, 1.1, 1.1])
     
     fig = subfigs[0]
     
@@ -448,7 +448,7 @@ def plot_lgth_dependence(net_name, exps_dictionary, title, filename = None):
         ax1 = fig1.add_subplot(gs1[0])
         #ax2 = fig1.add_subplot(gs1[1])
         
-        plot_comparison_analysis(ax1, exp_dictionary, net_name,plot_legend)
+        plot_comparison_analysis(ax1, exp_dictionary, net_name, plot_legend)
         if plot_legend:
             plot_legend = False
         fig1.suptitle(title[id_col])
@@ -465,9 +465,11 @@ def plot_lgth_dependence(net_name, exps_dictionary, title, filename = None):
     
 def ring_N_16(net_name = 'ring_graph_N=16'):
     
-    lgths_endpoints = [[10, 101, 5],[10, 201, 5]]
-    exps_name = ["gnr_logistc_compar_deg_2", "gnr_logistc_compar_deg_3"]
-    title = ['b) deg 2', 'c) deg 3']
+    lgths_endpoints = [[10, 201, 5]]
+    #exps_name = ["gnr_logistc_compar_deg_2", "gnr_logistc_compar_deg_3"]
+    #title = ['b) deg 2', 'c) deg 3']
+    exps_name = ["gnr_logistic_comp_pair_deg_3"]
+    title = ['b) deg 3']
     exps_dictionary = dict()
     
     for id_exp in range(len(exps_name)):
