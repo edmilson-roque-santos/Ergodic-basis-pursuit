@@ -14,7 +14,7 @@ import networkx as nx
 import numpy as np
 import os
 
-from EBP import net_dyn
+from EBP import net_dyn, tools
 from EBP.base_polynomial import pre_settings as pre_set 
 
 import lab_opto_electronic as lab_opto
@@ -97,7 +97,7 @@ def compare_script(opt_list, lgth_time_series, exp_name, net_name, id_trial):
     params = parameters.copy()
     
     if params['use_orthonormal']:
-        output_orthnormfunc_filename = pre_set.create_orthnormfunc_filename(params)
+        output_orthnormfunc_filename = out_dir(net_name, exp_name)#pre_set.create_orthnormfunc_filename(params)
     
         if not os.path.isfile(output_orthnormfunc_filename):
             params['orthnorm_func_filename'] = output_orthnormfunc_filename
@@ -222,8 +222,49 @@ def compare_setup(exp_name, net_name, lgth_endpoints, save_full_info = False):
 #Simulation increasing the network and finding length of time series such that
 #the reconstruction is successed. 
 #=============================================================================#
+def quick_comparison(net_dict, net_name):
+    G_true = nx.read_edgelist("network_structure/{}.txt".format(net_name),
+                        nodetype = int, create_using = nx.Graph)
+    
+    N = len(nx.nodes(G_true))
+    A = nx.to_numpy_array(G_true, nodelist = list(range(N)))
+    A = np.asarray(A)
+    G_true = nx.from_numpy_array(A, create_using = nx.Graph)
+    edges_G_true = list(G_true.edges())
+    
+    A_est = net_dict['A']
+    G_est = nx.from_numpy_array(A_est, create_using = nx.Graph)
+    links = lab_opto.links_types(G_est, G_true)        
 
-def compare_setup_critical_n(exp_name, net_name, size_endpoints, save_full_info = False):
+    total_connections = 0.5*N*(N-1)
+    FP = len(links['false_positives'])/(total_connections-len(edges_G_true))
+    FN = len(links['false_negatives'])/len(edges_G_true)
+    
+    return FP, FN        
+    
+def determine_critical_n(exp_param, size, exp_name, net_name, id_trial):
+    
+    local_net_name = net_name+"_{}".format(size)
+    tools.star_graph(size, 'network_structure/'+local_net_name)
+    
+    lgth_time_series_vector = np.arange(5, 3*size**2, 5, dtype = int)
+    id_, max_iterations = 0, 100
+    
+    find_critical = True
+    while (find_critical) or (id_ < max_iterations):
+        lgth_time_series = lgth_time_series_vector[id_]
+        print('lgth:', lgth_time_series)
+        net_dict = compare_script(exp_param, lgth_time_series, exp_name, local_net_name, id_trial)
+        FP, FN = quick_comparison(net_dict, local_net_name)
+        if (FP == 0) and (FN == 0):
+            find_critical = False
+        id_ = id_ + 1
+    
+    n_critical = lgth_time_series
+    return n_critical
+
+def compare_setup_critical_n(exp_name, net_name, size_endpoints, id_trial, 
+                             save_full_info = False):
     '''
     
     Parameters
@@ -276,21 +317,15 @@ def compare_setup_critical_n(exp_name, net_name, size_endpoints, save_full_info 
             for size in size_vector:
                 print('exp:', key, 'N = ', size)
                 
-                fun
+                n_critical = determine_critical_n(exp_params[key], size, exp_name, net_name, id_trial)
                 
-                net_dict = compare_script(exp_params[key], lgth_time_series, exp_name, 
-                                        net_name, None)
-                out_results_hdf5[key][lgth_time_series] = dict()
-                out_results_hdf5[key][lgth_time_series]['A'] = net_dict['A']
-                if save_full_info:
-                    out_results_hdf5[key][lgth_time_series]['PHI.T PHI'] = net_dict['PHI.T PHI']
-                    out_results_hdf5[key][lgth_time_series]['params'] = dict()
-                    save_dict(net_dict['params'], out_results_hdf5[key][lgth_time_series]['params'])            
-                
+                out_results_hdf5[key][size] = dict()
+                out_results_hdf5[key][size]['n_critical'] = n_critical
                 
         exp_dictionary = out_results_hdf5.to_dict()        
         out_results_hdf5.close()
         return exp_dictionary
+    
 #=============================================================================#
 #Lab Analysis
 #=============================================================================#
@@ -494,9 +529,13 @@ def ring_N_16(net_name = 'ring_graph_N=16'):
 
     return exps_dictionary, title
     
-
-
-
-
-
-    
+  
+#=============================================================================#
+#Scripts
+#=============================================================================#
+def star_graph_script():
+    exp_name = 'growing_net_deg_3'
+    net_name = 'star_graph'
+    size_endpoints = [3, 26, 5]
+    id_trial = np.array([0])
+    compare_setup_critical_n(exp_name, net_name, size_endpoints, id_trial,save_full_info = False)

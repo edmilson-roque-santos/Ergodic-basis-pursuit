@@ -45,6 +45,10 @@ def ring_graph(N, filename):
     G = nx.cycle_graph(N, create_using=nx.Graph())
     nx.write_edgelist(G, filename+".txt", data=False)
 
+def star_graph(N, filename):
+    G = nx.star_graph(N, create_using=nx.Graph())
+    nx.write_edgelist(G, filename+".txt", data=False)
+
 def random_toy_net_model(random_seed = 1, 
                     num_of_cluster = 5,
                     N_nodes_cluster = 10,
