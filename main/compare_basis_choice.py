@@ -51,7 +51,7 @@ def compare_script(opt_list, lgth_time_series, exp_name, net_name):
     parameters['Nseeds'] = 1
     
     parameters['network_name'] = net_name
-    parameters['max_deg_monomials'] = 2
+    parameters['max_deg_monomials'] = 3
     parameters['expansion_crossed_terms'] = True
     
     parameters['use_kernel'] = True
@@ -168,11 +168,11 @@ def compare_setup(exp_name, net_name, lgth_endpoints, save_full_info = False):
     '''
     exp_params = dict()
     #canonical
-    exp_params[0] = [True, False, False]
+    #exp_params[0] = [True, False, False]
     #normalize_cols
-    exp_params[1] = [True, True, False]
+    exp_params[0] = [True, True, False]
     #orthonormal
-    exp_params[2] = [False, False, True]
+    exp_params[1] = [False, False, True]
     
     length_time_series_vector = np.arange(lgth_endpoints[0], lgth_endpoints[1],
                                           lgth_endpoints[2], dtype = int)
