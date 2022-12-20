@@ -552,7 +552,7 @@ def lexico_permute(s):
         a[j+1:] = a[j+1:][::-1]
 
 
-def exp_vector(num_var, degree):
+def f_exp_vector(degree, num_var = 2):
     '''
     Create list of exponents vectors with size equals degree which the sum equals
     degree as well.
@@ -570,7 +570,6 @@ def exp_vector(num_var, degree):
         List of exponents vectors (each array is a list).
 
     '''
-    
     
     #List of all combinations of exponents that add up to degree deg
     seq_exp_sum_d = findCombinations(degree)
@@ -630,7 +629,7 @@ def reduced_index_iteration(params):
     #Otherwise, permutations must be taken into account
     if params['expansion_crossed_terms']:            
         for deg in range(1, order + 1):     
-            exp_final = exp_vector(N, deg)
+            exp_final = f_exp_vector(deg)
             
             for id_exp in range(len(exp_final)):
                 exp_final_ = np.asarray(exp_final[id_exp]+[0]*(N - len(exp_final[id_exp])))
@@ -690,7 +689,7 @@ def index_iteration(params):
         l = 1    
         for deg in range(1, order + 1):     
            
-            exp_final = exp_vector(N, deg)
+            exp_final = f_exp_vector(deg)
               
             #Generate power indices. 
             for id_exp in range(len(exp_final)):
