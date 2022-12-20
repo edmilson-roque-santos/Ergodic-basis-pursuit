@@ -71,7 +71,7 @@ def triage_params(params):
     if not parameters['expansion_crossed_terms']:
         parameters['L'] = parameters['number_of_vertices']*parameters['max_deg_monomials'] + 1
     else:
-        L = np.sum(np.fromiter((scipy.special.comb(l + parameters['number_of_vertices'] - 1, l, exact = True) for l in range(0, parameters['max_deg_monomials'] + 1)), int))
+        L = scipy.special.comb(parameters['number_of_vertices'], 2, exact = True)*(parameters['max_deg_monomials'] - 1) + parameters['number_of_vertices']*parameters['max_deg_monomials'] + 1
         parameters['L'] = int(round(L))
         
     #Determine if the columns of the library matrix will be normalized    
