@@ -23,7 +23,11 @@ import net_reconstr
 colors = ['darkgrey', 'orange', 'darkviolet', 'darkslategrey', 'silver']
 folder_name = 'results'
 
-def compare_script(opt_list, lgth_time_series, exp_name, net_name):
+#=============================================================================#
+#Simulation fix a network and increase length of time series 
+#=============================================================================#
+
+def compare_script(opt_list, lgth_time_series, exp_name, net_name, id_trial):
     '''
     Script for basis choice comparison. 
 
@@ -107,6 +111,9 @@ def compare_script(opt_list, lgth_time_series, exp_name, net_name):
     params['cluster_list'] = [np.arange(0, params['number_of_vertices'], 1, dtype = int)]
     params['threshold_connect'] = 1e-8
     
+    if id_trial != None:
+        params['id_trial'] = id_trial
+    
     solver_optimization = cp.ECOS
     
     net_dict = net_reconstr.reconstr(X_t, params, solver_optimization)
@@ -148,7 +155,6 @@ def out_dir(net_name, exp_name):
 def compare_setup(exp_name, net_name, lgth_endpoints, save_full_info = False):
     '''
     
-
     Parameters
     ----------
     exp_name : TYPE
@@ -199,7 +205,7 @@ def compare_setup(exp_name, net_name, lgth_endpoints, save_full_info = False):
             for lgth_time_series in length_time_series_vector:
                 print('exp:', key, 'n = ', lgth_time_series)
                 net_dict = compare_script(exp_params[key], lgth_time_series, exp_name, 
-                                        net_name)
+                                        net_name, None)
                 out_results_hdf5[key][lgth_time_series] = dict()
                 out_results_hdf5[key][lgth_time_series]['A'] = net_dict['A']
                 if save_full_info:
@@ -212,6 +218,82 @@ def compare_setup(exp_name, net_name, lgth_endpoints, save_full_info = False):
         out_results_hdf5.close()
         return exp_dictionary
 
+#=============================================================================#
+#Simulation increasing the network and finding length of time series such that
+#the reconstruction is successed. 
+#=============================================================================#
+
+def compare_setup_critical_n(exp_name, net_name, size_endpoints, save_full_info = False):
+    '''
+    
+    Parameters
+    ----------
+    exp_name : TYPE
+        DESCRIPTION.
+    net_name : TYPE
+        DESCRIPTION.
+    size_endpoints : TYPE
+        Start, end and space for size vector.
+    save_full_info : TYPE, optional
+        To save the library matrix. The default is False.
+
+    Returns
+    -------
+    exp_dictionary : TYPE
+        DESCRIPTION.
+
+    '''
+    exp_params = dict()
+    #canonical
+    #exp_params[0] = [True, False, False]
+    #normalize_cols
+    exp_params[0] = [True, True, False]
+    #orthonormal
+    exp_params[1] = [False, False, True]
+    
+    size_vector = np.arange(size_endpoints[0], size_endpoints[1],
+                                          size_endpoints[2], dtype = int)
+    
+    #Filename for output results
+    out_results_direc = out_dir(net_name, exp_name)
+    filename = "size_endpoints_{}_{}_{}".format(size_endpoints[0], size_endpoints[1],
+                                                size_endpoints[2]) 
+    
+    if os.path.isfile(out_results_direc+filename+".hdf5"):
+        out_results_hdf5 = h5dict.File(out_results_direc+filename+".hdf5", 'r')
+        exp_dictionary = out_results_hdf5.to_dict()  
+        out_results_hdf5.close()      
+        return exp_dictionary
+    
+    else:
+        out_results_hdf5 = h5dict.File(out_results_direc+filename+".hdf5", 'a')    
+        out_results_hdf5['size_endpoints'] = size_endpoints
+        out_results_hdf5['exp_params'] = dict() 
+        out_results_hdf5['exp_params'] = exp_params
+        
+        for key in exp_params.keys():    
+            out_results_hdf5[key] = dict()
+            for size in size_vector:
+                print('exp:', key, 'N = ', size)
+                
+                fun
+                
+                net_dict = compare_script(exp_params[key], lgth_time_series, exp_name, 
+                                        net_name, None)
+                out_results_hdf5[key][lgth_time_series] = dict()
+                out_results_hdf5[key][lgth_time_series]['A'] = net_dict['A']
+                if save_full_info:
+                    out_results_hdf5[key][lgth_time_series]['PHI.T PHI'] = net_dict['PHI.T PHI']
+                    out_results_hdf5[key][lgth_time_series]['params'] = dict()
+                    save_dict(net_dict['params'], out_results_hdf5[key][lgth_time_series]['params'])            
+                
+                
+        exp_dictionary = out_results_hdf5.to_dict()        
+        out_results_hdf5.close()
+        return exp_dictionary
+#=============================================================================#
+#Lab Analysis
+#=============================================================================#
 
 def compare_basis(exp_dictionary, net_name):
     
