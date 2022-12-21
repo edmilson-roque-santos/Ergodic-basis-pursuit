@@ -27,7 +27,27 @@ ortho_folder_name = 'ortho_func_folder'
 #Simulation fix a network and increase length of time series 
 #=============================================================================#
 
-def out_dir_ortho(net_name, exp_name, params):        
+def out_dir_ortho(net_name, exp_name, params):
+    '''
+    Create the folder name for save orthonormal functions 
+    locally inside results folder.
+
+    Parameters
+    ----------
+    net_name : str
+        Network structure filename.
+    exp_name : str
+        Filename.
+    params : dict
+        
+
+    Returns
+    -------
+    out_results_direc : str
+        Out results directory.
+
+    '''
+        
     out_results_direc = os.path.join(folder_name, ortho_folder_name)
     out_results_direc = os.path.join(out_results_direc, net_name)
     out_results_direc = os.path.join(out_results_direc, exp_name)
@@ -60,10 +80,12 @@ def compare_script(opt_list, lgth_time_series, exp_name, net_name, id_trial):
         Filename.
     net_name: str
         Network structure filename.
+    id_trial: numpy array 
+        Set of nodes to be reconstructed
         
     Returns
     -------
-    dictionary result from greedy net algorithm.
+    dictionary result from net reconstruction algorithm.
 
     '''
     ############# Construct the parameters dictionary ##############
@@ -116,7 +138,7 @@ def compare_script(opt_list, lgth_time_series, exp_name, net_name, id_trial):
     
     if params['use_orthonormal']:
         out_dir_ortho_folder = out_dir_ortho(net_name, exp_name, params)
-        output_orthnormfunc_filename = out_dir_ortho_folder#pre_set.create_orthnormfunc_filename(params)
+        output_orthnormfunc_filename = out_dir_ortho_folder
     
         if not os.path.isfile(output_orthnormfunc_filename):
             params['orthnorm_func_filename'] = output_orthnormfunc_filename
@@ -161,7 +183,24 @@ def save_dict(dictionary, out_dict):
         except:
             print("Error: not possible to save", key)
 
-def out_dir(net_name, exp_name):        
+def out_dir(net_name, exp_name): 
+    '''
+    Create the folder name for save comparison  
+    locally inside results folder.
+
+    Parameters
+    ----------
+    net_name : str
+        Network structure filename.
+    exp_name : str
+        Filename.
+    
+    Returns
+    -------
+    out_results_direc : str
+        Out results directory.
+
+    '''       
     out_results_direc = os.path.join(folder_name, net_name)
     out_results_direc = os.path.join(out_results_direc, exp_name)
     out_results_direc = os.path.join(out_results_direc, '')
@@ -173,6 +212,23 @@ def out_dir(net_name, exp_name):
 
 
 def out_dir_size_exp(net_class, exp_name):        
+    '''
+    Create the folder name for save orthonormal functions 
+    locally inside results folder.
+
+    Parameters
+    ----------
+    net_class : str
+        Common network structure filename.
+    exp_name : str
+        Filename.
+    
+    Returns
+    -------
+    out_results_direc : str
+        Out results directory.
+
+    '''
     out_results_direc = os.path.join(folder_name, net_class)
     out_results_direc = os.path.join(out_results_direc, exp_name)
     out_results_direc = os.path.join(out_results_direc, '')
@@ -188,13 +244,13 @@ def compare_setup(exp_name, net_name, lgth_endpoints, save_full_info = False):
     
     Parameters
     ----------
-    exp_name : TYPE
-        DESCRIPTION.
-    net_name : TYPE
-        DESCRIPTION.
-    lgth_endpoints : TYPE
+    exp_name : str
+        filename.
+    net_name : str
+        Network structure filename.
+    lgth_endpoints : list
         Start, end and space for length time vector.
-    save_full_info : TYPE, optional
+    save_full_info : dict, optional
         To save the library matrix. The default is False.
 
     Returns
@@ -254,15 +310,26 @@ def compare_setup(exp_name, net_name, lgth_endpoints, save_full_info = False):
 #the reconstruction is successed. 
 #=============================================================================#
 def quick_comparison(net_dict, net_name):
-    G_true = nx.read_edgelist("network_structure/{}.txt".format(net_name),
-                        nodetype = int, create_using = nx.Graph)
-    
-    N = len(nx.nodes(G_true))
-    A = nx.to_numpy_array(G_true, nodelist = list(range(N)))
-    A = np.asarray(A)
-    G_true = nx.from_numpy_array(A, create_using = nx.Graph)
-    edges_G_true = list(G_true.edges())
-    
+    '''
+    False positives and false negatives proportions between two graphs.
+
+    Parameters
+    ----------
+    net_dict : dict
+        Output results dictionary.
+    net_name : str
+        Network structure filename.
+
+    Returns
+    -------
+    FP : float
+        False positive proportion.
+    FN : float
+        False negative proportion.
+
+    '''
+    G_true, edges_G_true, N = get_G_true(net_name) 
+
     A_est = net_dict['A']
     G_est = nx.from_numpy_array(A_est, create_using = nx.Graph)
     links = lab_opto.links_types(G_est, G_true)        
@@ -274,7 +341,28 @@ def quick_comparison(net_dict, net_name):
     return FP, FN        
     
 def determine_critical_n(exp_param, size, exp_name, net_class, id_trial):
-    
+    '''
+    Determine the minimum length of time series for a successfull reconstruction.
+
+    Parameters
+    ----------
+    exp_param : list
+        Set the optlist for compare_script.
+    size : float
+        Network size.
+    exp_name : str
+        Filename.
+    net_class : str
+        Common network structure filename.
+    id_trial : numpy array
+        Set of nodes to be reconstructed.
+
+    Returns
+    -------
+    n_critical : float
+        minimum length of time series.
+
+    '''
     net_name = net_class+"_{}".format(size)
     tools.star_graph(size, 'network_structure/'+net_name)
     
@@ -298,22 +386,24 @@ def determine_critical_n(exp_param, size, exp_name, net_class, id_trial):
 def compare_setup_critical_n(exp_name, net_class, size_endpoints, id_trial, 
                              save_full_info = False):
     '''
+    Comparison script to growing the net size and evaluate the critical length of 
+    time series for a successful reconstruction.
     
     Parameters
     ----------
-    exp_name : TYPE
-        DESCRIPTION.
-    net_name : TYPE
-        DESCRIPTION.
-    size_endpoints : TYPE
+    exp_name : str
+        Filename.
+    net_name : str
+        Network structure filename.
+    size_endpoints : list
         Start, end and space for size vector.
-    save_full_info : TYPE, optional
+    save_full_info : dict, optional
         To save the library matrix. The default is False.
 
     Returns
     -------
-    exp_dictionary : TYPE
-        DESCRIPTION.
+    exp_dictionary : dict
+        Output results dictionary.
 
     '''
     exp_params = dict()
@@ -362,9 +452,25 @@ def compare_setup_critical_n(exp_name, net_class, size_endpoints, id_trial,
 #=============================================================================#
 #Lab Analysis
 #=============================================================================#
+def get_G_true(net_name):
+    '''
+    Obtain the G true from the filename
 
-def compare_basis(exp_dictionary, net_name):
-    
+    Parameters
+    ----------
+    net_name : str
+        Network structure filename.
+
+    Returns
+    -------
+    G_true : networkx graph
+        True graph structure.
+    edges_G_true : list
+        All edges from the true graph.
+    N: int
+        Net size
+        
+    '''
     G_true = nx.read_edgelist("network_structure/{}.txt".format(net_name),
                         nodetype = int, create_using = nx.Graph)
     
@@ -373,6 +479,34 @@ def compare_basis(exp_dictionary, net_name):
     A = np.asarray(A)
     G_true = nx.from_numpy_array(A, create_using = nx.Graph)
     edges_G_true = list(G_true.edges())
+    
+    return G_true, edges_G_true, N
+
+def compare_basis(exp_dictionary, net_name):
+    '''
+    Given a experiment dict, it calculates the performance of the reconstruction.
+
+    Parameters
+    ----------
+    exp_dictionary : dict
+        Output results dictionary.
+    net_name : str
+        Filename.
+
+    Returns
+    -------
+    lgth_vector : numpy array 
+        Array with length of time series vector.
+    FP_comparison : numpy array
+        False positive proportion for each length of time series.
+    FN_comparison : numpy array
+        False negative proportion for each length of time series.
+    d_matrix : TYPE
+        DESCRIPTION.
+
+    '''
+    G_true, edges_G_true, N = get_G_true(net_name) 
+    
     exp_vec = exp_dictionary['exp_params'].keys()
     lgth_endpoints = exp_dictionary['lgth_endpoints']
     
