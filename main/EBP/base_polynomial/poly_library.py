@@ -575,7 +575,7 @@ def f_exp_vector(degree, num_var = 2):
     seq_exp_sum_d = findCombinations(degree)
     
     #Filter exponent vectors which have more than num_var entries        
-    exp_initial = list(filter(lambda x: len(x) <= num_var, seq_exp_sum_d))
+    exp_initial = list(filter(lambda x: len(x) == num_var, seq_exp_sum_d))
     
     exp_initial_ = []
     for id_exp_initial in range(len(exp_initial)):
@@ -583,6 +583,8 @@ def f_exp_vector(degree, num_var = 2):
         #But it removes duplicates.
         for exp_vec in lexico_permute(exp_initial[id_exp_initial]):
             exp_initial_.append(exp_vec)
+    exp_initial_.sort()
+    
     return exp_initial_
 
 def reduced_index_iteration(params):
@@ -676,8 +678,9 @@ def index_iteration(params):
     #If the expansion has no crossed terms    
     if not params['expansion_crossed_terms']:
         l = 1
-        for deg in range(1, order + 1):
-            for id_node in range(N):
+        
+        for id_node in range(N):
+            for deg in range(1, order + 1):
                 exp_vec = np.zeros(N, dtype = int)
                 exp_vec[id_node] = deg
                 
@@ -686,22 +689,31 @@ def index_iteration(params):
 
     #Otherwise, permutations must be taken into account
     if params['expansion_crossed_terms']:
-        l = 1    
-        for deg in range(1, order + 1):     
-           
-            exp_final = f_exp_vector(deg)
-              
-            #Generate power indices. 
-            for id_exp in range(len(exp_final)):
-                #Take length of each array which when entries are summed yields
-                #a certain degree deg
-                num_var = len(exp_final[id_exp])
+        l = 1
+        #Generate power indices. 
+        
+        #Isolated functions
+        for id_node in range(N):
+            for deg in range(1, order + 1):
+                exp_vec = np.zeros(N, dtype = int)
+                exp_vec[id_node] = deg
                 
-                #Take all combinations for number of variables num_var using
-                #the index array, which represents the nodes.            
-                #For each index of variables that receives some exponent from
-                #exp_final[id_exp]
-                for exp_vec in itertools.combinations(index_vec, num_var):
+                power_indices.append(exp_vec)
+                l = l + 1 
+        #Pairwise functions
+        #Take all combinations for number of variables num_var using
+        #the index array, which represents the nodes. 
+        #For each index of variables that receives some exponent from
+        #exp_final[id_exp]
+        num_var = 2
+        for exp_vec in itertools.combinations(index_vec, num_var):
+        
+            for deg in range(2, order + 1):     
+           
+                exp_final = f_exp_vector(deg, num_var)
+             
+                for id_exp in range(len(exp_final)):
+                           
                     exp_array = np.zeros(N, dtype = int)
                     loc_exp = np.asarray(exp_vec, dtype = int)
                     
