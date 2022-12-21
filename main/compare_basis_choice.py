@@ -22,10 +22,28 @@ import net_reconstr
 
 colors = ['darkgrey', 'orange', 'darkviolet', 'darkslategrey', 'silver']
 folder_name = 'results'
-
+ortho_folder_name = 'ortho_func_folder'
 #=============================================================================#
 #Simulation fix a network and increase length of time series 
 #=============================================================================#
+
+def out_dir_ortho(net_name, exp_name, params):        
+    out_results_direc = os.path.join(folder_name, ortho_folder_name)
+    out_results_direc = os.path.join(out_results_direc, net_name)
+    out_results_direc = os.path.join(out_results_direc, exp_name)
+    out_results_direc = os.path.join(out_results_direc, '')
+    if os.path.isdir(out_results_direc ) == False:
+        os.makedirs(out_results_direc)
+        
+    #For coupling analysis it is necessary to save each orthonormal function 
+    #with respect to this coupling.
+    filename = 'onf_deg_{}_lgth_ts_{}_coupling_{}_crossed_{}'.format(params['max_deg_monomials'],
+                                                              params['length_of_time_series'], 
+                                                              params['coupling'],
+                                                              params['expansion_crossed_terms'])
+    out_results_direc = os.path.join(out_results_direc, filename)
+    
+    return out_results_direc
 
 def compare_script(opt_list, lgth_time_series, exp_name, net_name, id_trial):
     '''
@@ -72,7 +90,7 @@ def compare_script(opt_list, lgth_time_series, exp_name, net_name, id_trial):
     A = nx.to_numpy_array(G, nodelist = list(range(parameters['number_of_vertices'])))
     A = np.asarray(A)
     parameters['adj_matrix'] = A
-    parameters['coupling'] = 1e-3
+    parameters['coupling'] = 5e-4
     #==========================================================#
     net_dynamics_dict = dict()
     net_dynamics_dict['adj_matrix'] = parameters['adj_matrix']
@@ -97,7 +115,8 @@ def compare_script(opt_list, lgth_time_series, exp_name, net_name, id_trial):
     params = parameters.copy()
     
     if params['use_orthonormal']:
-        output_orthnormfunc_filename = out_dir(net_name, exp_name)#pre_set.create_orthnormfunc_filename(params)
+        out_dir_ortho_folder = out_dir_ortho(net_name, exp_name, params)
+        output_orthnormfunc_filename = out_dir_ortho_folder#pre_set.create_orthnormfunc_filename(params)
     
         if not os.path.isfile(output_orthnormfunc_filename):
             params['orthnorm_func_filename'] = output_orthnormfunc_filename
@@ -151,6 +170,18 @@ def out_dir(net_name, exp_name):
         os.makedirs(out_results_direc)
 
     return out_results_direc
+
+
+def out_dir_size_exp(net_class, exp_name):        
+    out_results_direc = os.path.join(folder_name, net_class)
+    out_results_direc = os.path.join(out_results_direc, exp_name)
+    out_results_direc = os.path.join(out_results_direc, '')
+    
+    if os.path.isdir(out_results_direc ) == False:
+        os.makedirs(out_results_direc)
+
+    return out_results_direc
+
 
 def compare_setup(exp_name, net_name, lgth_endpoints, save_full_info = False):
     '''
@@ -242,28 +273,29 @@ def quick_comparison(net_dict, net_name):
     
     return FP, FN        
     
-def determine_critical_n(exp_param, size, exp_name, net_name, id_trial):
+def determine_critical_n(exp_param, size, exp_name, net_class, id_trial):
     
-    local_net_name = net_name+"_{}".format(size)
-    tools.star_graph(size, 'network_structure/'+local_net_name)
+    net_name = net_class+"_{}".format(size)
+    tools.star_graph(size, 'network_structure/'+net_name)
     
     lgth_time_series_vector = np.arange(5, 3*size**2, 5, dtype = int)
     id_, max_iterations = 0, 100
     
     find_critical = True
-    while (find_critical) or (id_ < max_iterations):
+    while (find_critical) and (id_ < max_iterations):
         lgth_time_series = lgth_time_series_vector[id_]
         print('lgth:', lgth_time_series)
-        net_dict = compare_script(exp_param, lgth_time_series, exp_name, local_net_name, id_trial)
-        FP, FN = quick_comparison(net_dict, local_net_name)
+        net_dict = compare_script(exp_param, lgth_time_series, exp_name, net_name, id_trial)
+        FP, FN = quick_comparison(net_dict, net_name)
         if (FP == 0) and (FN == 0):
             find_critical = False
+            print('Net Recovered!')
         id_ = id_ + 1
     
     n_critical = lgth_time_series
     return n_critical
 
-def compare_setup_critical_n(exp_name, net_name, size_endpoints, id_trial, 
+def compare_setup_critical_n(exp_name, net_class, size_endpoints, id_trial, 
                              save_full_info = False):
     '''
     
@@ -296,7 +328,8 @@ def compare_setup_critical_n(exp_name, net_name, size_endpoints, id_trial,
                                           size_endpoints[2], dtype = int)
     
     #Filename for output results
-    out_results_direc = out_dir(net_name, exp_name)
+    out_results_direc = out_dir_size_exp(net_class, exp_name)
+        
     filename = "size_endpoints_{}_{}_{}".format(size_endpoints[0], size_endpoints[1],
                                                 size_endpoints[2]) 
     
@@ -317,7 +350,7 @@ def compare_setup_critical_n(exp_name, net_name, size_endpoints, id_trial,
             for size in size_vector:
                 print('exp:', key, 'N = ', size)
                 
-                n_critical = determine_critical_n(exp_params[key], size, exp_name, net_name, id_trial)
+                n_critical = determine_critical_n(exp_params[key], size, exp_name, net_class, id_trial)
                 
                 out_results_hdf5[key][size] = dict()
                 out_results_hdf5[key][size]['n_critical'] = n_critical
@@ -534,8 +567,8 @@ def ring_N_16(net_name = 'ring_graph_N=16'):
 #Scripts
 #=============================================================================#
 def star_graph_script():
-    exp_name = 'growing_net_deg_3'
-    net_name = 'star_graph'
+    exp_name = 'growing_net_deg_3_0_0005'
+    net_class = 'star_graph'
     size_endpoints = [3, 26, 5]
     id_trial = np.array([0])
-    compare_setup_critical_n(exp_name, net_name, size_endpoints, id_trial,save_full_info = False)
+    compare_setup_critical_n(exp_name, net_class, size_endpoints, id_trial,save_full_info = False)
