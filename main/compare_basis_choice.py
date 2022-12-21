@@ -112,7 +112,7 @@ def compare_script(opt_list, lgth_time_series, exp_name, net_name, id_trial):
     A = nx.to_numpy_array(G, nodelist = list(range(parameters['number_of_vertices'])))
     A = np.asarray(A)
     parameters['adj_matrix'] = A
-    parameters['coupling'] = 5e-4
+    parameters['coupling'] = 1e-3
     #==========================================================#
     net_dynamics_dict = dict()
     net_dynamics_dict['adj_matrix'] = parameters['adj_matrix']
@@ -121,7 +121,8 @@ def compare_script(opt_list, lgth_time_series, exp_name, net_name, id_trial):
     net_dynamics_dict['f'] = lambda x: r*x*(1 - x)
     net_dynamics_dict['h'] = lambda x: (x**1)*(A.T @ x**1)
     net_dynamics_dict['max_degree'] = np.max(np.sum(A, axis=0))
-    net_dynamics_dict['coupling'] = parameters['coupling']*net_dynamics_dict['max_degree']
+    net_dynamics_dict['coupling'] = parameters['coupling']#*net_dynamics_dict['max_degree']
+    net_dynamics_dict['random_seed'] = 1
     X_time_series = net_dyn.gen_net_dynamics(lgth_time_series, net_dynamics_dict)    
     #==========================================================#    
     
@@ -375,6 +376,8 @@ def determine_critical_n(exp_param, size, exp_name, net_class, id_trial):
         print('lgth:', lgth_time_series)
         net_dict = compare_script(exp_param, lgth_time_series, exp_name, net_name, id_trial)
         FP, FN = quick_comparison(net_dict, net_name)
+        print('FP, FN:', FP, FN)
+        print('A', net_dict['A'][:, 0])
         if (FP == 0) and (FN == 0):
             find_critical = False
             print('Net Recovered!')
@@ -543,6 +546,42 @@ def compare_basis(exp_dictionary, net_name):
             
     return lgth_vector, FP_comparison, FN_comparison, d_matrix
 
+def compare_basis_net_size(exp_dictionary, net_class):
+    '''
+    Given a experiment dict, it calculates the performance of the reconstruction.
+
+    Parameters
+    ----------
+    exp_dictionary : dict
+        Output results dictionary.
+    net_class : str
+        Filename.
+
+    Returns
+    -------
+    size_vector : numpy array 
+        Array with length of time series vector.
+    n_critical_comparison : numpy array
+        n_critical for each length of time series.
+    
+    '''
+    exp_vec = exp_dictionary['exp_params'].keys()
+    size_endpoints = exp_dictionary['size_endpoints']
+    
+    size_vector = np.arange(size_endpoints['0'], size_endpoints['1'],
+                                      size_endpoints['2'], dtype = int)
+    
+    n_critical_comparison = np.zeros((len(exp_vec), size_vector.shape[0]))
+    
+    for exp_ in exp_vec:
+        for id_key in range(len(size_vector)):
+            key = size_vector[id_key]
+            n_critical = exp_dictionary[exp_][key]['n_critical']
+            n_critical_comparison[exp_, id_key] = n_critical
+            
+            
+    return size_vector, n_critical_comparison
+
 def ax_plot_true_net(ax, G_true, pos_true, probed_node = 0, 
                      print_probed = True, plot_net_alone = False):
     '''
@@ -599,6 +638,41 @@ def ax_plot_true_net(ax, G_true, pos_true, probed_node = 0,
     if plot_net_alone:
         ax.set_title('{}'.format('Original Network'))
 
+def ax_plot_star_graph(ax, plot_net_alone=False):
+    
+    N = 10
+    G_true = nx.star_graph(N, create_using=nx.Graph())
+    pos_true = nx.spring_layout(G_true)
+    nx.draw_networkx_nodes(G_true, pos = pos_true,
+                           ax = ax, node_color = colors[3], 
+                           linewidths= 1.0,
+                           node_size = 250,
+                           alpha = 1.0)
+    nx.draw_networkx_nodes(G_true, pos = pos_true,
+                           node_color = colors[0], 
+                           node_size = 200,
+                           ax = ax,
+                           alpha = 1.0)
+    
+    nx.draw_networkx_nodes(G_true, pos = pos_true,
+                            ax = ax,
+                            nodelist=[0],
+                            node_color = colors[3], 
+                            node_size = 200,
+                            alpha = 1.0)
+        
+    nx.draw_networkx_edges(G_true,pos = pos_true, 
+                           ax = ax,
+                           edgelist = list(G_true.edges()), 
+                           edge_color = colors[4],
+                           arrowsize = 7,
+                           width = 0.65,
+                           alpha = 1.0)
+    ax.margins(0.3)
+    ax.axis("off")
+    if plot_net_alone:
+        ax.set_title('{}'.format('Original Network'))
+
 def plot_comparison_analysis(ax, exp_dictionary, net_name, plot_legend):    
     
     lgth_vector, FP_comparison, FN_comparison, d_matrix = compare_basis(exp_dictionary, 
@@ -612,6 +686,18 @@ def plot_comparison_analysis(ax, exp_dictionary, net_name, plot_legend):
     #ax[1].set_ylabel(r'FN')
     ax.set_xlabel(r'$n$')
     
+def plot_comparison_n_critical(ax, exp_dictionary, net_class, plot_legend):    
+    
+    size_vector, n_critical_comparison = compare_basis_net_size(exp_dictionary, 
+                                                                        net_class)
+    
+    lab_opto.plot_false_proportion(ax, size_vector, n_critical_comparison, plot_legend)
+    ax.set_ylabel(r'$n_c$')
+    plt.setp(ax.get_xticklabels(), visible=True)
+    
+    #lab_opto.plot_false_proportion(ax[1], lgth_vector, FN_comparison, True)
+    #ax[1].set_ylabel(r'FN')
+    ax.set_xlabel(r'$N$')
     
 def plot_lgth_dependence(net_name, exps_dictionary, title, filename = None):    
     
@@ -620,8 +706,8 @@ def plot_lgth_dependence(net_name, exps_dictionary, title, filename = None):
     keys = list(exps_dictionary.keys())
     n_cols = int(len(keys))
     
-    fig_ = plt.figure(figsize = (11, 3), dpi = 300)
-    subfigs = fig_.subfigures(1, 2, width_ratios = [0.9, 1.1, 1.1])
+    fig_ = plt.figure(figsize = (6, 3), dpi = 300)
+    subfigs = fig_.subfigures(1, 2, width_ratios = [0.9, 1.1])
     
     fig = subfigs[0]
     
@@ -664,7 +750,51 @@ def plot_lgth_dependence(net_name, exps_dictionary, title, filename = None):
         
     return     
 
+def plot_n_c_size(exps_dictionary, title, filename = None):    
     
+    net_class = 'star_graph'
+    
+    keys = list(exps_dictionary.keys())
+    n_cols = int(len(keys))
+    
+    fig_ = plt.figure(figsize = (6, 3), dpi = 300)
+    subfigs = fig_.subfigures(1, 2, width_ratios = [0.9, 1.1])
+    
+    fig = subfigs[0]
+    
+    gs = GridSpec(nrows=1, ncols=1, figure=fig)
+    
+    ax_0 = fig.add_subplot(gs[0])
+    
+    ax_plot_star_graph(ax_0)
+    
+    fig.suptitle(r'a) Original Network') 
+    plot_legend = True
+    for id_col in range(n_cols):
+        fig1 = subfigs[id_col+1]
+        
+        gs1 = GridSpec(nrows=1, ncols=1, figure=fig1)
+        exp_dictionary = exps_dictionary[keys[id_col]]
+        ax1 = fig1.add_subplot(gs1[0])
+        #ax2 = fig1.add_subplot(gs1[1])
+        
+        plot_comparison_n_critical(ax1, exp_dictionary, net_class, plot_legend)
+        if plot_legend:
+            plot_legend = False
+        fig1.suptitle(title[id_col])
+    
+    fig_.suptitle('fig')
+    if filename == None:
+        plt.show()
+    else:
+     
+        plt.savefig(filename+".pdf", format='pdf', bbox_inches='tight')
+        
+    return     
+  
+#=============================================================================#
+#Scripts
+#=============================================================================#
 def ring_N_16(net_name = 'ring_graph_N=16'):
     
     lgths_endpoints = [[10, 201, 5]]
@@ -695,14 +825,46 @@ def ring_N_16(net_name = 'ring_graph_N=16'):
         exps_dictionary[id_exp] = exp_dictionary
 
     return exps_dictionary, title
+def ring_net_plot_script():
+    exps_dictionary, title = ring_N_16(net_name = 'ring_graph_N=16')
+    plot_lgth_dependence('ring_graph_N=16', exps_dictionary, title, filename = None)
+
+def star_graph(exps_name, size_endpoints, net_class = 'star_graph'):
+    title = ['b) deg 3']
+    exps_dictionary = dict()
     
-  
-#=============================================================================#
-#Scripts
-#=============================================================================#
+    for id_exp in range(len(exps_name)):
+        size_endpoints = size_endpoints[id_exp]
+
+        exp_name = exps_name[id_exp]
+        out_results_direc = os.path.join(folder_name, net_class)
+        out_results_direc = os.path.join(out_results_direc, exp_name)
+        out_results_direc = os.path.join(out_results_direc, '')
+        
+        if os.path.isdir(out_results_direc ) == False:
+            print("Failed to find the desired result folder !")
+            
+        filename = "size_endpoints_{}_{}_{}".format(size_endpoints[0], size_endpoints[1],
+                                                    size_endpoints[2]) 
+        
+        if os.path.isfile(out_results_direc+filename+".hdf5"):
+            out_results_hdf5 = h5dict.File(out_results_direc+filename+".hdf5", 'r')
+            exp_dictionary = out_results_hdf5.to_dict()  
+            out_results_hdf5.close()
+        exps_dictionary[id_exp] = exp_dictionary
+
+    return exps_dictionary, title  
+
+def star_graph_plot_script():
+    exps_name = ['growing_net_deg_3_3_99_0_001_N']
+    size_endpoints = [[3, 51, 5]]
+    exps_dictionary, title = star_graph(exps_name, size_endpoints, net_class = 'star_graph')
+    plot_n_c_size(exps_dictionary, title, filename = None)
+
+    
 def star_graph_script():
-    exp_name = 'growing_net_deg_3_0_0005'
+    exp_name = 'growing_net_deg_3_3_99_0_001_N'
     net_class = 'star_graph'
-    size_endpoints = [3, 26, 5]
+    size_endpoints = [3, 51, 5]
     id_trial = np.array([0])
     compare_setup_critical_n(exp_name, net_class, size_endpoints, id_trial,save_full_info = False)
