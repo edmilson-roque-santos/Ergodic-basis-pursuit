@@ -3,6 +3,7 @@ import itertools
 import numpy as np
 from numpy import linalg as LA
 
+import scipy.special
 from scipy.integrate import quad
 import sympy as spy
 import time
@@ -630,12 +631,14 @@ def reduced_index_iteration(params):
         
     #Otherwise, permutations must be taken into account
     if params['expansion_crossed_terms']:            
-        for deg in range(1, order + 1):     
-            exp_final = f_exp_vector(deg)
+        
+        for num_var in range(1, 3):
+            for deg in range(1, order + 1):     
+                exp_final = f_exp_vector(deg, num_var)
             
-            for id_exp in range(len(exp_final)):
-                exp_final_ = np.asarray(exp_final[id_exp]+[0]*(N - len(exp_final[id_exp])))
-                power_indices.append(exp_final_)
+                for id_exp in range(len(exp_final)):
+                    exp_final_ = np.asarray(exp_final[id_exp]+[0]*(N - len(exp_final[id_exp])))
+                    power_indices.append(exp_final_)
   
     return np.array(power_indices, dtype = int)
 
@@ -905,6 +908,8 @@ def reduced_poly_orthonormal_PHI(X_t, params, reduced_pindex):
     N = params['number_of_vertices']
     M = params['length_of_time_series']
     L = params['L']
+    order = params['max_deg_monomials']
+    
     #Create a index vector of N entries
     index_vec = np.arange(N, dtype = int)
 
@@ -935,70 +940,84 @@ def reduced_poly_orthonormal_PHI(X_t, params, reduced_pindex):
                          'sympy')
     
     symbolic_PHI.append(sym_f(tuple(x_t)))
-        
-    l = 1
-    for idex in range(1, reduced_pindex.shape[0]):
-        start_time = time.time()
-        
-        func, params = spy_gram_schmidt(tuple(reduced_pindex[idex, :]), params,
-                                        reduced_pindex)
-        
-        #Select a exponent array
-        exp_vec_initial = reduced_pindex[idex, :]
-       
-        #Create a mask to identify which entries have an actual number
-        mask_larger_zero = exp_vec_initial > 0
-        
-        #Determine number of variables involved in the calculation
-        num_box = len(exp_vec_initial[mask_larger_zero])
-        
-        #Create a reduced number of variables which a dummy variables.
-        #Dummy variables are auxiliar variables to run over permutations in the 
-        #actual variables.
-        dummy_t = [spy.symbols('x_{}'.format(j)) for j in range(0, num_box)]
     
-        f = spy.lambdify([dummy_t], 
-                         params['orthnormfunc'][tuple(reduced_pindex[idex, :])],
-                         'numpy')
-        
-        #In parallel, we create a symbolic version of the above 
-        #orthornormal function
-        sym_f = spy.lambdify([tuple(dummy_t)], 
-                             params['orthnormfunc'][tuple(reduced_pindex[idex, :])],
-                             'sympy')
-        
+    l = 1
+    #start_time = time.time()
+    
+    for num_var in range(1, 3):    
         #Create a list of all permutations in the exp_vec_initial
-        exp_vec = list(itertools.combinations(index_vec, num_box))
-        #print(exp_vec)        
+        exp_vec = list(itertools.combinations(index_vec, num_var))
         #For each index of variables that receives some degree of exp_final[id_exp]
         for id_exp_vec in range(len(exp_vec)):
-            loc_exp = np.asarray(exp_vec[id_exp_vec], dtype = int)
             
-            #Create a array to receive columns of the data X_t as we run over
-            #permutations of the exponent array
-            #eval_array = np.zeros((M, num_box))    
+            #Identify which basis functions to be evaluated
+            #Isolated
+            if (num_var == 1):
+                num_basis = order
+                start = 1
             
-            sym_eval_array = []
-            
-            eval_array = np.copy(X_t[:, loc_exp])
-            
-            sym_list = []
-            for id_loc in range(loc_exp.shape[0]):
+            #Pairwise functions
+            if params['expansion_crossed_terms']:
+                if (num_var > 1):
+                    num_basis = scipy.special.comb(2, 2, exact = True)*scipy.special.comb(order, 2, exact = True)
+                    num_basis = int(round(num_basis))
+                    start = order + 2
+            else: 
+                num_basis = 0
+                start = 1
                 
-                sym_list.append(x_t[loc_exp[id_loc]])
-            sym_eval_array = sym_list
-            
-            #Evaluate at this columns from the data X_t and plug it into library matrix
-            PHI[:, l] = f(eval_array.T)/np.sqrt(M)
+            for idex in range(start, num_basis + 1):
                 
-            #At the same time, build matrix R of the QR decomposition
-            symbolic_PHI.append(sym_f(tuple(sym_eval_array)))
-            R[:, l] = get_coeff_matrix_wrt_basis(sym_f(tuple(sym_eval_array)), 
-                                                       dict_canonical_basis_functions)
-        
-            l = l + 1
-            end_time = time.time()
-            #print(l, (end_time - start_time)/60, '\n')
+                #Select a exponent array
+                exp_vec_temp = reduced_pindex[idex, :]
+                
+                func, params = spy_gram_schmidt(tuple(exp_vec_temp), params,
+                                                reduced_pindex)
+                
+                #Create a reduced number of variables which a dummy variables.
+                #Dummy variables are auxiliar variables to run over permutations in the 
+                #actual variables.
+                dummy_t = [spy.symbols('x_{}'.format(j)) for j in range(0, num_var)]
+            
+                f = spy.lambdify([dummy_t], 
+                                 params['orthnormfunc'][tuple(exp_vec_temp)],
+                                 'numpy')
+                
+                #In parallel, we create a symbolic version of the above 
+                #orthornormal function
+                sym_f = spy.lambdify([tuple(dummy_t)], 
+                                     params['orthnormfunc'][tuple(exp_vec_temp)],
+                                     'sympy')
+                
+                #print(exp_vec)        
+                
+                loc_exp = np.asarray(exp_vec[id_exp_vec], dtype = int)
+                
+                #Create a array to receive columns of the data X_t as we run over
+                #permutations of the exponent array
+                #eval_array = np.zeros((M, num_var))    
+                
+                sym_eval_array = []
+                
+                eval_array = np.copy(X_t[:, loc_exp])
+                
+                sym_list = []
+                for id_loc in range(loc_exp.shape[0]):
+                    sym_list.append(x_t[loc_exp[id_loc]])
+                
+                sym_eval_array = sym_list
+                
+                #Evaluate at this columns from the data X_t and plug it into library matrix
+                PHI[:, l] = f(eval_array.T)/np.sqrt(M)
+                    
+                #At the same time, build matrix R of the QR decomposition
+                symbolic_PHI.append(sym_f(tuple(sym_eval_array)))
+                R[:, l] = get_coeff_matrix_wrt_basis(sym_f(tuple(sym_eval_array)), 
+                                                           dict_canonical_basis_functions)
+            
+                l = l + 1
+                #end_time = time.time()
+                #print(l, (end_time - start_time)/60, '\n')
     
     #Update params dictionary to include the symbolic version of orthonormal functions
     params['symbolic_PHI'] = symbolic_PHI
