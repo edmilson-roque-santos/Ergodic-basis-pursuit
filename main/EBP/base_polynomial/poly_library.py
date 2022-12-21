@@ -701,19 +701,17 @@ def index_iteration(params):
                 power_indices.append(exp_vec)
                 l = l + 1 
         #Pairwise functions
-        #Take all combinations for number of variables num_var using
-        #the index array, which represents the nodes. 
-        #For each index of variables that receives some exponent from
-        #exp_final[id_exp]
+        #For each pair of nodes organized in lexicographic order
         num_var = 2
         for exp_vec in itertools.combinations(index_vec, num_var):
         
+            #Fix a degree of the monomial
             for deg in range(2, order + 1):     
-           
+                #Take all combinations of indices that summed yield the degree deg
                 exp_final = f_exp_vector(deg, num_var)
              
                 for id_exp in range(len(exp_final)):
-                           
+                               
                     exp_array = np.zeros(N, dtype = int)
                     loc_exp = np.asarray(exp_vec, dtype = int)
                     
