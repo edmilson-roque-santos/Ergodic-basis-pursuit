@@ -336,7 +336,12 @@ def quick_comparison(net_dict, net_name):
     links = lab_opto.links_types(G_est, G_true)        
 
     total_connections = 0.5*N*(N-1)
-    FP = len(links['false_positives'])/(total_connections-len(edges_G_true))
+    total_fp_connections = (total_connections-len(edges_G_true))
+    
+    if total_fp_connections == 0:
+        FP = 0
+    else:
+        FP = len(links['false_positives'])/total_fp_connections
     FN = len(links['false_negatives'])/len(edges_G_true)
     
     return FP, FN        
@@ -366,6 +371,7 @@ def determine_critical_n(exp_param, size, exp_name, net_class, id_trial):
     '''
     net_name = net_class+"_{}".format(size)
     tools.star_graph(size, 'network_structure/'+net_name)
+    #tools.ring_graph(size, 'network_structure/'+net_name)
     
     lgth_time_series_vector = np.arange(5, 3*size**2, 5, dtype = int)
     id_, max_iterations = 0, 100
@@ -415,7 +421,7 @@ def compare_setup_critical_n(exp_name, net_class, size_endpoints, id_trial,
     #normalize_cols
     exp_params[0] = [True, True, False]
     #orthonormal
-    exp_params[1] = [False, False, True]
+    #exp_params[1] = [False, False, True]
     
     size_vector = np.arange(size_endpoints[0], size_endpoints[1],
                                           size_endpoints[2], dtype = int)
@@ -868,3 +874,18 @@ def star_graph_script():
     size_endpoints = [3, 51, 5]
     id_trial = np.array([0])
     compare_setup_critical_n(exp_name, net_class, size_endpoints, id_trial,save_full_info = False)
+
+
+def test_plot_script():
+    exps_name = ['test']
+    size_endpoints = [[3, 51, 5]]
+    exps_dictionary, title = star_graph(exps_name, size_endpoints, net_class = 'star_graph')
+    plot_n_c_size(exps_dictionary, title, filename = None)
+
+    
+def test_script():
+    exp_name = 'test_3_star_id_trial'
+    net_class = 'star_graph'
+    size_endpoints = [3, 51, 5]
+    id_trial = None #np.array([0])
+    compare_setup_critical_n(exp_name, net_class, size_endpoints, id_trial,save_full_info = False)    
