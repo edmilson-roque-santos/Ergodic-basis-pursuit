@@ -211,35 +211,6 @@ def out_dir(net_name, exp_name):
 
     return out_results_direc
 
-
-def out_dir_size_exp(net_class, exp_name):        
-    '''
-    Create the folder name for save orthonormal functions 
-    locally inside results folder.
-
-    Parameters
-    ----------
-    net_class : str
-        Common network structure filename.
-    exp_name : str
-        Filename.
-    
-    Returns
-    -------
-    out_results_direc : str
-        Out results directory.
-
-    '''
-    out_results_direc = os.path.join(folder_name, net_class)
-    out_results_direc = os.path.join(out_results_direc, exp_name)
-    out_results_direc = os.path.join(out_results_direc, '')
-    
-    if os.path.isdir(out_results_direc ) == False:
-        os.makedirs(out_results_direc)
-
-    return out_results_direc
-
-
 def compare_setup(exp_name, net_name, lgth_endpoints, save_full_info = False):
     '''
     
@@ -427,7 +398,7 @@ def compare_setup_critical_n(exp_name, net_class, size_endpoints, id_trial,
                                           size_endpoints[2], dtype = int)
     
     #Filename for output results
-    out_results_direc = out_dir_size_exp(net_class, exp_name)
+    out_results_direc = out_dir(net_class, exp_name)
         
     filename = "size_endpoints_{}_{}_{}".format(size_endpoints[0], size_endpoints[1],
                                                 size_endpoints[2]) 
