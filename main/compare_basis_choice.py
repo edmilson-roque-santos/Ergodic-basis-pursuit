@@ -341,8 +341,8 @@ def determine_critical_n(exp_param, size, exp_name, net_class, id_trial):
 
     '''
     net_name = net_class+"_{}".format(size)
-    tools.star_graph(size, 'network_structure/'+net_name)
-    #tools.ring_graph(size, 'network_structure/'+net_name)
+    #tools.star_graph(size, 'network_structure/'+net_name)
+    tools.ring_graph(size, 'network_structure/'+net_name)
     
     lgth_time_series_vector = np.arange(5, 3*size**2, 5, dtype = int)
     id_, max_iterations = 0, 100
@@ -392,7 +392,7 @@ def compare_setup_critical_n(exp_name, net_class, size_endpoints, id_trial,
     #normalize_cols
     exp_params[0] = [True, True, False]
     #orthonormal
-    #exp_params[1] = [False, False, True]
+    exp_params[1] = [False, False, True]
     
     size_vector = np.arange(size_endpoints[0], size_endpoints[1],
                                           size_endpoints[2], dtype = int)
@@ -839,12 +839,12 @@ def star_graph_plot_script():
     plot_n_c_size(exps_dictionary, title, filename = None)
 
     
-def star_graph_script():
+def ring_graph_script():
     exp_name = 'growing_net_deg_3_3_99_0_001_N'
-    net_class = 'star_graph'
+    net_class = 'ring_graph'
     size_endpoints = [3, 51, 5]
-    id_trial = np.array([0])
-    compare_setup_critical_n(exp_name, net_class, size_endpoints, id_trial,save_full_info = False)
+    id_trial = None #np.array([0])
+    compare_setup_critical_n(exp_name, net_class, size_endpoints, id_trial, save_full_info = False)
 
 
 def test_plot_script():
