@@ -340,7 +340,8 @@ def quick_comparison(net_dict, net_name):
     
     return FP, FN        
     
-def determine_critical_n(exp_param, size, exp_name, net_class, id_trial):
+def determine_critical_n(exp_param, size, exp_name, net_class, id_trial = None, 
+                         random_seed = 1):
     '''
     Determine the minimum length of time series for a successfull reconstruction.
 
@@ -380,7 +381,8 @@ def determine_critical_n(exp_param, size, exp_name, net_class, id_trial):
         script_dict['lgth_time_series'] = lgth_time_series
         script_dict['exp_name'] = exp_name
         script_dict['net_name'] = net_name
-        script_dict['id_trial'] = None
+        script_dict['id_trial'] = id_trial
+        script_dict['random_seed'] = random_seed
         
         net_dict = compare_script(script_dict)
         FP, FN = quick_comparison(net_dict, net_name)
@@ -394,8 +396,8 @@ def determine_critical_n(exp_param, size, exp_name, net_class, id_trial):
     n_critical = lgth_time_series
     return n_critical
 
-def compare_setup_critical_n(exp_name, net_class, size_endpoints, id_trial, 
-                             save_full_info = False):
+def compare_setup_critical_n(exp_name, net_class, size_endpoints, id_trial,
+                             random_seed = 1, save_full_info = False):
     '''
     Comparison script to growing the net size and evaluate the critical length of 
     time series for a successful reconstruction.
@@ -431,8 +433,10 @@ def compare_setup_critical_n(exp_name, net_class, size_endpoints, id_trial,
     #Filename for output results
     out_results_direc = out_dir(net_class, exp_name)
         
-    filename = "size_endpoints_{}_{}_{}".format(size_endpoints[0], size_endpoints[1],
-                                                size_endpoints[2]) 
+    filename = "size_endpoints_{}_{}_{}_seed_{}".format(size_endpoints[0], 
+                                                        size_endpoints[1],
+                                                        size_endpoints[2], 
+                                                        random_seed) 
     
     if os.path.isfile(out_results_direc+filename+".hdf5"):
         out_results_hdf5 = h5dict.File(out_results_direc+filename+".hdf5", 'r')
@@ -451,7 +455,8 @@ def compare_setup_critical_n(exp_name, net_class, size_endpoints, id_trial,
             for size in size_vector:
                 print('exp:', key, 'N = ', size)
                 
-                n_critical = determine_critical_n(exp_params[key], size, exp_name, net_class, id_trial)
+                n_critical = determine_critical_n(exp_params[key], size, exp_name, 
+                                                  net_class, id_trial, random_seed)
                 
                 out_results_hdf5[key][size] = dict()
                 out_results_hdf5[key][size]['n_critical'] = n_critical
@@ -877,12 +882,13 @@ def star_graph_plot_script():
     plot_n_c_size(exps_dictionary, title, filename = None)
 
     
-def ring_graph_script():
+def ring_graph_script(rs):
     exp_name = 'growing_net_deg_3_3_99_0_001_N'
     net_class = 'ring_graph'
     size_endpoints = [3, 51, 5]
     id_trial = None #np.array([0])
-    compare_setup_critical_n(exp_name, net_class, size_endpoints, id_trial, save_full_info = False)
+    compare_setup_critical_n(exp_name, net_class, size_endpoints, id_trial, 
+                             random_seed = rs, save_full_info = False)
 
 
 def test_plot_script():
