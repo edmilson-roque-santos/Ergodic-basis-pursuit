@@ -57,32 +57,36 @@ def out_dir_ortho(net_name, exp_name, params):
         
     #For coupling analysis it is necessary to save each orthonormal function 
     #with respect to this coupling.
-    filename = 'onf_deg_{}_lgth_ts_{}_coupling_{}_crossed_{}'.format(params['max_deg_monomials'],
+    filename = 'onf_deg_{}_lgth_ts_{}_coupling_{}_crossed_{}_seed_{}'.format(params['max_deg_monomials'],
                                                               params['length_of_time_series'], 
                                                               params['coupling'],
-                                                              params['expansion_crossed_terms'])
+                                                              params['expansion_crossed_terms'],
+                                                              params['random_seed'])
     out_results_direc = os.path.join(out_results_direc, filename)
     
     return out_results_direc
 
-def compare_script(opt_list, lgth_time_series, exp_name, net_name, id_trial):
+def compare_script(script_dict):
     '''
     Script for basis choice comparison. 
 
     Parameters
     ----------
-    opt_list : list of boolean
-        Each entry determines which basis is selected. 
-        Order: #canonical, normalize_cols, orthonormal
-    lgth_time_series : float
-        Length of time series.
-    exp_name : str
-        Filename.
-    net_name: str
-        Network structure filename.
-    id_trial: numpy array 
-        Set of nodes to be reconstructed
-        
+    script_dict : dict
+    Dictionary with specifier of the comparison script
+    Keys:
+        opt_list : list of boolean
+            Each entry determines which basis is selected. 
+            Order: #canonical, normalize_cols, orthonormal
+        lgth_time_series : float
+            Length of time series.
+        exp_name : str
+            Filename.
+        net_name: str
+            Network structure filename.
+        id_trial: numpy array 
+            Set of nodes to be reconstructed
+            
     Returns
     -------
     dictionary result from net reconstruction algorithm.
@@ -91,19 +95,19 @@ def compare_script(opt_list, lgth_time_series, exp_name, net_name, id_trial):
     ############# Construct the parameters dictionary ##############
     parameters = dict()
     
-    parameters['exp_name'] = exp_name
+    parameters['exp_name'] = script_dict['exp_name']
     parameters['Nseeds'] = 1
-    
-    parameters['network_name'] = net_name
+    parameters['random_seed'] = script_dict.get('random_seed', 1)
+    parameters['network_name'] = script_dict['net_name']
     parameters['max_deg_monomials'] = 3
     parameters['expansion_crossed_terms'] = True
     
     parameters['use_kernel'] = True
     parameters['noisy_measurement'] = False
-    parameters['use_canonical'] = opt_list[0]
-    parameters['normalize_cols'] = opt_list[1]
-    parameters['use_orthonormal'] = opt_list[2]
-    parameters['length_of_time_series'] = lgth_time_series
+    parameters['use_canonical'] = script_dict['opt_list'][0]
+    parameters['normalize_cols'] = script_dict['opt_list'][1]
+    parameters['use_orthonormal'] = script_dict['opt_list'][2]
+    parameters['length_of_time_series'] = script_dict['lgth_time_series']
     
     G = nx.read_edgelist("network_structure/{}.txt".format(parameters['network_name']),
                         nodetype = int, create_using = nx.Graph)
@@ -122,43 +126,53 @@ def compare_script(opt_list, lgth_time_series, exp_name, net_name, id_trial):
     net_dynamics_dict['h'] = lambda x: (x**1)*(A.T @ x**1)
     net_dynamics_dict['max_degree'] = np.max(np.sum(A, axis=0))
     net_dynamics_dict['coupling'] = parameters['coupling']#*net_dynamics_dict['max_degree']
-    net_dynamics_dict['random_seed'] = 1
-    X_time_series = net_dyn.gen_net_dynamics(lgth_time_series, net_dynamics_dict)    
+    net_dynamics_dict['random_seed'] = parameters['random_seed']
+    X_time_series = net_dyn.gen_net_dynamics(script_dict['lgth_time_series'], net_dynamics_dict)    
     #==========================================================#    
     
-    X_t = X_time_series[:lgth_time_series,:]
-    
-    parameters['lower_bound'] = np.min(X_t)
-    parameters['upper_bound'] = np.max(X_t)
-    
-    parameters['number_of_vertices'] = X_t.shape[1]
-    
-    parameters['X_time_series_data'] = X_t
-    
-    params = parameters.copy()
-    
-    if params['use_orthonormal']:
-        out_dir_ortho_folder = out_dir_ortho(net_name, exp_name, params)
-        output_orthnormfunc_filename = out_dir_ortho_folder
-    
-        if not os.path.isfile(output_orthnormfunc_filename):
-            params['orthnorm_func_filename'] = output_orthnormfunc_filename
-            params['orthnormfunc'] = pre_set.create_orthnormfunc_kde(params)    
+    net_dict = dict()
 
-        if os.path.isfile(output_orthnormfunc_filename):
-            params['orthnorm_func_filename'] = output_orthnormfunc_filename
-                  
-        params['build_from_reduced_basis'] = True
+    mask_bounds = (X_time_series < 0) | (X_time_series > 1) | (np.any(np.isnan(X_time_series)))
+    if np.any(mask_bounds):
+        raise ValueError("Network dynamics does not live in a compact set ")
+        
+    if not np.any(mask_bounds):
+
+        X_t = X_time_series[:script_dict['lgth_time_series'],:]
+        
+        parameters['lower_bound'] = np.min(X_t)
+        parameters['upper_bound'] = np.max(X_t)
+        
+        parameters['number_of_vertices'] = X_t.shape[1]
+        
+        parameters['X_time_series_data'] = X_t
+        
+        params = parameters.copy()
+        
+        if params['use_orthonormal']:
+            out_dir_ortho_folder = out_dir_ortho(script_dict['net_name'], 
+                                                 script_dict['exp_name'], params)
+            
+            output_orthnormfunc_filename = out_dir_ortho_folder
+        
+            if not os.path.isfile(output_orthnormfunc_filename):
+                params['orthnorm_func_filename'] = output_orthnormfunc_filename
+                params['orthnormfunc'] = pre_set.create_orthnormfunc_kde(params)    
     
-    params['cluster_list'] = [np.arange(0, params['number_of_vertices'], 1, dtype = int)]
-    params['threshold_connect'] = 1e-8
-    
-    if id_trial != None:
-        params['id_trial'] = id_trial
-    
-    solver_optimization = cp.ECOS
-    
-    net_dict = net_reconstr.reconstr(X_t, params, solver_optimization)
+            if os.path.isfile(output_orthnormfunc_filename):
+                params['orthnorm_func_filename'] = output_orthnormfunc_filename
+                      
+            params['build_from_reduced_basis'] = True
+        
+        params['cluster_list'] = [np.arange(0, params['number_of_vertices'], 1, dtype = int)]
+        params['threshold_connect'] = 1e-8
+        
+        if script_dict['id_trial'] != None:
+            params['id_trial'] = script_dict['id_trial']
+        
+        solver_optimization = cp.ECOS
+        
+        net_dict = net_reconstr.reconstr(X_t, params, solver_optimization)
     
     return net_dict
 
@@ -211,7 +225,8 @@ def out_dir(net_name, exp_name):
 
     return out_results_direc
 
-def compare_setup(exp_name, net_name, lgth_endpoints, save_full_info = False):
+def compare_setup(exp_name, net_name, lgth_endpoints, random_seed = 1, 
+                  save_full_info = False):
     '''
     
     Parameters
@@ -244,8 +259,8 @@ def compare_setup(exp_name, net_name, lgth_endpoints, save_full_info = False):
     
     #Filename for output results
     out_results_direc = out_dir(net_name, exp_name)
-    filename = "lgth_endpoints_{}_{}_{}".format(lgth_endpoints[0], lgth_endpoints[1],
-                                                lgth_endpoints[2]) 
+    filename = "lgth_endpoints_{}_{}_{}_seed_{}".format(lgth_endpoints[0], lgth_endpoints[1],
+                                                lgth_endpoints[2], random_seed) 
     
     if os.path.isfile(out_results_direc+filename+".hdf5"):
         out_results_hdf5 = h5dict.File(out_results_direc+filename+".hdf5", 'r')
@@ -263,8 +278,16 @@ def compare_setup(exp_name, net_name, lgth_endpoints, save_full_info = False):
             out_results_hdf5[key] = dict()
             for lgth_time_series in length_time_series_vector:
                 print('exp:', key, 'n = ', lgth_time_series)
-                net_dict = compare_script(exp_params[key], lgth_time_series, exp_name, 
-                                        net_name, None)
+                
+                script_dict = dict()
+                script_dict['opt_list'] = exp_params[key]
+                script_dict['lgth_time_series'] = lgth_time_series
+                script_dict['exp_name'] = exp_name
+                script_dict['net_name'] = net_name
+                script_dict['id_trial'] = None
+                script_dict['random_seed'] = random_seed
+                
+                net_dict = compare_script(script_dict)
                 out_results_hdf5[key][lgth_time_series] = dict()
                 out_results_hdf5[key][lgth_time_series]['A'] = net_dict['A']
                 if save_full_info:
@@ -351,7 +374,15 @@ def determine_critical_n(exp_param, size, exp_name, net_class, id_trial):
     while (find_critical) and (id_ < max_iterations):
         lgth_time_series = lgth_time_series_vector[id_]
         print('lgth:', lgth_time_series)
-        net_dict = compare_script(exp_param, lgth_time_series, exp_name, net_name, id_trial)
+        
+        script_dict = dict()
+        script_dict['opt_list'] = exp_param
+        script_dict['lgth_time_series'] = lgth_time_series
+        script_dict['exp_name'] = exp_name
+        script_dict['net_name'] = net_name
+        script_dict['id_trial'] = None
+        
+        net_dict = compare_script(script_dict)
         FP, FN = quick_comparison(net_dict, net_name)
         print('FP, FN:', FP, FN)
         print('A', net_dict['A'][:, 0])
@@ -832,6 +863,13 @@ def star_graph(exps_name, size_endpoints, net_class = 'star_graph'):
 
     return exps_dictionary, title  
 
+def ring_graph_lgth_script(rs):
+    exp_name = 'logistic_lgth_3_99_0_001_N'
+    net_name = 'ring_graph_N=16'
+    lgth_endpoints = [10, 201, 5]
+    compare_setup(exp_name, net_name, lgth_endpoints, random_seed = rs, 
+                      save_full_info = False)
+
 def star_graph_plot_script():
     exps_name = ['growing_net_deg_3_3_99_0_001_N']
     size_endpoints = [[3, 51, 5]]
@@ -855,8 +893,8 @@ def test_plot_script():
 
     
 def test_script():
-    exp_name = 'test_3_star_id_trial'
-    net_class = 'star_graph'
+    exp_name = 'test_ring_2'
+    net_class = 'ring_graph'
     size_endpoints = [3, 51, 5]
     id_trial = None #np.array([0])
     compare_setup_critical_n(exp_name, net_class, size_endpoints, id_trial,save_full_info = False)    
