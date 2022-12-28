@@ -1,4 +1,4 @@
-#PBS -N GR_MC
+#PBS -N nc_MC
 #PBS -l select=1:ncpus=40  
 #PBS -l walltime=336:00:00 
 #PBS -m abe
@@ -14,4 +14,4 @@ cp -a /home/edroque/Greedy_Reconstruction/MC_EBP/.  /lustre/edroque/Greedy_Recon
 
 cd /lustre/edroque/Greedy_Reconstruction/MC_EBP
 
-python mp_lgth.py > saida.txt
+python mp_nc.py > saida.txt
