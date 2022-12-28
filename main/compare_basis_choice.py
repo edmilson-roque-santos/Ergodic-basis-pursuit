@@ -237,6 +237,8 @@ def compare_setup(exp_name, net_name, lgth_endpoints, random_seed = 1,
         Network structure filename.
     lgth_endpoints : list
         Start, end and space for length time vector.
+    random_seed : int
+        Seed for the random pseudo-generator.
     save_full_info : dict, optional
         To save the library matrix. The default is False.
 
@@ -357,6 +359,8 @@ def determine_critical_n(exp_param, size, exp_name, net_class, id_trial = None,
         Common network structure filename.
     id_trial : numpy array
         Set of nodes to be reconstructed.
+    random_seed : int
+        Seed for the random pseudo-generator.
 
     Returns
     -------
@@ -410,6 +414,8 @@ def compare_setup_critical_n(exp_name, net_class, size_endpoints, id_trial,
         Network structure filename.
     size_endpoints : list
         Start, end and space for size vector.
+    random_seed : int
+        Seed for the random pseudo-generator.
     save_full_info : dict, optional
         To save the library matrix. The default is False.
 
@@ -869,6 +875,20 @@ def star_graph(exps_name, size_endpoints, net_class = 'star_graph'):
     return exps_dictionary, title  
 
 def ring_graph_lgth_script(rs):
+    '''
+    Script to generate an experiment of varying length of time series and
+    obtaining the network reconstruction.
+
+    Parameters
+    ----------
+    rs : int
+        Int for the seed of the random pseudo-generator.
+
+    Returns
+    -------
+    None.
+
+    '''
     exp_name = 'logistic_lgth_3_99_0_001_N'
     net_name = 'ring_graph_N=16'
     lgth_endpoints = [10, 201, 5]
@@ -883,6 +903,20 @@ def star_graph_plot_script():
 
     
 def ring_graph_script(rs):
+    '''
+    Script to generate an experiment of determining the critical length 
+    of time series as the size of the network is increased.
+
+    Parameters
+    ----------
+    rs : int
+        Int for the seed of the random pseudo-generator.
+
+    Returns
+    -------
+    None.
+
+    '''
     exp_name = 'growing_net_deg_3_3_99_0_001_N'
     net_class = 'ring_graph'
     size_endpoints = [3, 51, 5]
