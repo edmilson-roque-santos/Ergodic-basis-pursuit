@@ -18,6 +18,7 @@ from EBP import net_dyn, tools
 from EBP.base_polynomial import pre_settings as pre_set 
 
 import lab_opto_electronic as lab_opto
+
 import net_reconstr 
 
 colors = ['darkgrey', 'orange', 'darkviolet', 'darkslategrey', 'silver']
@@ -534,7 +535,7 @@ def compare_basis(exp_dictionary, net_name):
     '''
     G_true, edges_G_true, N = get_G_true(net_name) 
     
-    exp_vec = exp_dictionary['exp_params'].keys()
+    exp_vec = list(exp_dictionary['exp_params'].keys())
     lgth_endpoints = exp_dictionary['lgth_endpoints']
     
     lgth_vector = np.arange(lgth_endpoints['0'], lgth_endpoints['1'],
@@ -542,33 +543,23 @@ def compare_basis(exp_dictionary, net_name):
     
     FP_comparison = np.zeros((len(exp_vec), lgth_vector.shape[0]))
     FN_comparison = np.zeros((len(exp_vec), lgth_vector.shape[0]))
-    d_matrix = np.zeros((len(exp_vec), lgth_vector.shape[0]))
 
-    for exp_ in exp_vec:
+    for id_exp in range(len(exp_vec)):
         for id_key in range(len(lgth_vector)):
             key = lgth_vector[id_key]
-            A_est = exp_dictionary[exp_][key]['A']
+            A_est = exp_dictionary[exp_vec[id_exp]]['{}'.format(key)]['A']
             
             G_est = nx.from_numpy_array(A_est, create_using = nx.Graph)
             links = lab_opto.links_types(G_est, G_true)        
     
-            intersec_weights, false_pos_weights = links['intersec_weights'],\
-                links['false_pos_weights']
-            if len(intersec_weights) > 0 or len(false_pos_weights) > 0:
-                d_matrix[exp_, id_key] = lab_opto.interval_intersec(false_pos_weights,
-                                                                    intersec_weights)
-            else:
-                d_matrix[exp_, id_key] = np.nan
-                print("Failed:", exp_, id_key)
-            
             total_connections = 0.5*N*(N-1)
             FP = len(links['false_positives'])/(total_connections-len(edges_G_true))
-            FP_comparison[exp_, id_key] = FP
+            FP_comparison[id_exp, id_key] = FP
             
             FN = len(links['false_negatives'])/len(edges_G_true)
-            FN_comparison[exp_, id_key] = FN
+            FN_comparison[id_exp, id_key] = FN
             
-    return lgth_vector, FP_comparison, FN_comparison, d_matrix
+    return lgth_vector, FP_comparison, FN_comparison
 
 def compare_basis_net_size(exp_dictionary, net_class):
     '''
@@ -699,15 +690,32 @@ def ax_plot_star_graph(ax, plot_net_alone=False):
 
 def plot_comparison_analysis(ax, exp_dictionary, net_name, plot_legend):    
     
-    lgth_vector, FP_comparison, FN_comparison, d_matrix = compare_basis(exp_dictionary, 
-                                                                        net_name)
+    seeds = list(exp_dictionary.keys())
+    Nseeds = int(len(seeds))
     
-    lab_opto.plot_false_proportion(ax, lgth_vector, FP_comparison, plot_legend)
+    lgth_endpoints = exp_dictionary[seeds[0]]['lgth_endpoints']
+    lgth_vector = np.arange(lgth_endpoints['0'], lgth_endpoints['1'],
+                                      lgth_endpoints['2'], dtype = int)
+    
+    FP_comparison, FN_comparison = np.zeros((Nseeds, 2, lgth_vector.shape[0])), np.zeros((Nseeds, 2, lgth_vector.shape[0]))
+    
+    for id_seed in range(Nseeds):
+        lgth_vector, FP_comparison[id_seed, :, :], FN_comparison[id_seed, :, :]  = compare_basis(exp_dictionary[seeds[id_seed]], 
+                                                                            net_name)
+    
+    avge_FP_comparison = FP_comparison.mean(axis = 0)    
+    std_FP_comparison = FP_comparison.std(axis = 0)    
+    avge_FN_comparison = FN_comparison.mean(axis = 0)    
+    std_FN_comparison = FN_comparison.std(axis = 0)    
+    
+    
+    '''
+    lab_opto.plot_false_proportion(ax, lgth_vector, avge_FP_comparison, std_FP_comparison, True, plot_legend)
     ax.set_ylabel(r'FP')
     plt.setp(ax.get_xticklabels(), visible=True)
-    
-    #lab_opto.plot_false_proportion(ax[1], lgth_vector, FN_comparison, True)
-    #ax[1].set_ylabel(r'FN')
+    '''
+    lab_opto.plot_false_proportion(ax, lgth_vector, avge_FN_comparison, std_FN_comparison, True, True)
+    ax.set_ylabel(r'FN')
     ax.set_xlabel(r'$n$')
     
 def plot_comparison_n_critical(ax, exp_dictionary, net_class, plot_legend):    
@@ -724,8 +732,6 @@ def plot_comparison_n_critical(ax, exp_dictionary, net_class, plot_legend):
     ax.set_xlabel(r'$N$')
     
 def plot_lgth_dependence(net_name, exps_dictionary, title, filename = None):    
-    
-    
     
     keys = list(exps_dictionary.keys())
     n_cols = int(len(keys))
@@ -756,7 +762,9 @@ def plot_lgth_dependence(net_name, exps_dictionary, title, filename = None):
         fig1 = subfigs[id_col+1]
         
         gs1 = GridSpec(nrows=1, ncols=1, figure=fig1)
+        
         exp_dictionary = exps_dictionary[keys[id_col]]
+        
         ax1 = fig1.add_subplot(gs1[0])
         #ax2 = fig1.add_subplot(gs1[1])
         
@@ -819,38 +827,43 @@ def plot_n_c_size(exps_dictionary, title, filename = None):
 #=============================================================================#
 #Scripts
 #=============================================================================#
-def ring_N_16(net_name = 'ring_graph_N=16'):
+def ring_N_16(net_name = 'ring_graph_N=16', Nseeds = 10):
     
     lgths_endpoints = [[10, 201, 5]]
     #exps_name = ["gnr_logistc_compar_deg_2", "gnr_logistc_compar_deg_3"]
     #title = ['b) deg 2', 'c) deg 3']
-    exps_name = ["gnr_logistic_comp_pair_deg_3"]
+    exps_name = ["logistic_lgth_3_99_0_001_N"]
     title = ['b) deg 3']
     exps_dictionary = dict()
     
     for id_exp in range(len(exps_name)):
+        exps_dictionary[id_exp] = dict()
         lgth_endpoints = lgths_endpoints[id_exp]
-
         exp_name = exps_name[id_exp]
         out_results_direc = os.path.join(folder_name, net_name)
         out_results_direc = os.path.join(out_results_direc, exp_name)
         out_results_direc = os.path.join(out_results_direc, '')
         
-        if os.path.isdir(out_results_direc ) == False:
+        if os.path.isdir(out_results_direc) == False:
             print("Failed to find the desired result folder !")
-            
-        filename = "lgth_endpoints_{}_{}_{}".format(lgth_endpoints[0], lgth_endpoints[1],
-                                                    lgth_endpoints[2]) 
         
-        if os.path.isfile(out_results_direc+filename+".hdf5"):
-            out_results_hdf5 = h5dict.File(out_results_direc+filename+".hdf5", 'r')
-            exp_dictionary = out_results_hdf5.to_dict()  
-            out_results_hdf5.close()
-        exps_dictionary[id_exp] = exp_dictionary
-
+        for seed in range(1, Nseeds + 1):
+            exps_dictionary[id_exp][seed] = dict()
+         
+            filename = "lgth_endpoints_{}_{}_{}_seed_{}".format(lgth_endpoints[0], lgth_endpoints[1],
+                                                        lgth_endpoints[2], seed) 
+            
+            if os.path.isfile(out_results_direc+filename+".hdf5"):
+                out_results_hdf5 = h5dict.File(out_results_direc+filename+".hdf5", 'r')
+                exp_dictionary = out_results_hdf5.to_dict()  
+                out_results_hdf5.close()
+            
+            exps_dictionary[id_exp][seed] = exp_dictionary
+    
     return exps_dictionary, title
-def ring_net_plot_script():
-    exps_dictionary, title = ring_N_16(net_name = 'ring_graph_N=16')
+
+def ring_net_plot_script(Nseeds = 10):
+    exps_dictionary, title = ring_N_16(net_name = 'ring_graph_N=16', Nseeds = Nseeds)
     plot_lgth_dependence('ring_graph_N=16', exps_dictionary, title, filename = None)
 
 def star_graph(exps_name, size_endpoints, net_class = 'star_graph'):
@@ -899,6 +912,15 @@ def ring_graph_lgth_script(rs):
     lgth_endpoints = [10, 201, 5]
     compare_setup(exp_name, net_name, lgth_endpoints, random_seed = rs, 
                       save_full_info = False)
+
+def test_rgraph(rs):
+    exp_name = 'test_rgraph'
+    net_name = 'ring_graph_N=16'
+    lgth_endpoints = [90, 91, 5]
+    exp_dictionary = compare_setup(exp_name, net_name, lgth_endpoints, random_seed = rs, 
+                      save_full_info = True)
+
+    return exp_dictionary
 
 def star_graph_plot_script():
     exps_name = ['growing_net_deg_3_3_99_0_001_N']

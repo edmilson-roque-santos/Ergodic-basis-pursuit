@@ -942,9 +942,11 @@ def reduced_poly_orthonormal_PHI(X_t, params, reduced_pindex):
     symbolic_PHI.append(sym_f(tuple(x_t)))
     
     l = 1
-    #start_time = time.time()
     
+    #start_time = time.time()
     for num_var in range(1, 3):    
+        one_enter = True
+       
         #Create a list of all permutations in the exp_vec_initial
         exp_vec = list(itertools.combinations(index_vec, num_var))
         #For each index of variables that receives some degree of exp_final[id_exp]
@@ -953,20 +955,22 @@ def reduced_poly_orthonormal_PHI(X_t, params, reduced_pindex):
             #Identify which basis functions to be evaluated
             #Isolated
             if (num_var == 1):
-                num_basis = order
                 start = 1
-            
+                num_basis = order + 1
+                
             #Pairwise functions
             if params['expansion_crossed_terms']:
-                if (num_var > 1):
-                    num_basis = scipy.special.comb(2, 2, exact = True)*scipy.special.comb(order, 2, exact = True)
-                    num_basis = int(round(num_basis))
-                    start = order + 2
-            else: 
-                num_basis = 0
-                start = 1
+                if (num_var > 1) and (one_enter):
+                    start = num_basis
+                    num_basis_ = scipy.special.comb(2, 2, exact = True)*scipy.special.comb(order, 2, exact = True)
+                    num_basis = start + int(round(num_basis_))
+                    one_enter = False
                 
-            for idex in range(start, num_basis + 1):
+            else: 
+                start = 1
+                num_basis = 1
+                
+            for idex in range(start, num_basis):
                 
                 #Select a exponent array
                 exp_vec_temp = reduced_pindex[idex, :]

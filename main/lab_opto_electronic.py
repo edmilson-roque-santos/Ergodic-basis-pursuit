@@ -1247,7 +1247,8 @@ def compare_basis(exp_dictionary):
     return lgth_vector, FN_comparison, d_matrix
 
 
-def plot_false_proportion(ax, lgth_vector, f_comp_vec, plot_legend = False):
+def plot_false_proportion(ax, lgth_vector, f_comp_vec, std, plot_std = True, 
+                          plot_legend = False):
     '''
     Plot sharing x axis the false proportion for each length of time series.
 
@@ -1281,6 +1282,10 @@ def plot_false_proportion(ax, lgth_vector, f_comp_vec, plot_legend = False):
         ax.plot(lgth_vector, f_comp_vec[id_exp, :], '-', 
                 label = labels[id_exp], marker = markers[id_exp], 
                 color = colors[id_exp])
+        if plot_std:
+            ax.fill_between(lgth_vector, f_comp_vec[id_exp, :] - std[id_exp, :],
+                            f_comp_vec[id_exp, :] + std[id_exp, :], 
+                    color = colors[id_exp], alpha = 0.2)
         
     if plot_legend:
         #ax.legend(bbox_to_anchor=(0,1.02,1,0.2), loc="lower left",
