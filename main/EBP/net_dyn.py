@@ -58,14 +58,14 @@ def gen_net_dynamics(number_of_iterations, args, use_noise = False):
     
     N = A.shape[0]
     
-    time_series  = np.zeros((int(number_of_iterations + 1), N))
+    time_series  = np.zeros((int(number_of_iterations), N))
     
     initial_condition = rng.random(N)
     initial_condition = np.asarray(initial_condition, dtype=np.float64)
      
     x_state = np.zeros(N)
     
-    iterator = range(1, int(number_of_iterations) + 1)
+    iterator = range(1, int(number_of_iterations))
 
     time_series[0, :] = initial_condition 
     x_state = initial_condition
