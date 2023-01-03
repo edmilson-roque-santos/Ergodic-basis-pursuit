@@ -6,12 +6,10 @@
 #PBS -o /home/edroque/Greedy_Reconstruction/MC_EBP/output
 #PBS -e /home/edroque/Greedy_Reconstruction/MC_EBP/erros
 
-source anaconda3/bin/activate
-
 mkdir -p /lustre/edroque/Collaboration/Greedy_Reconstruction/MC_EBP/
 
-cp -a /home/edroque/Greedy_Reconstruction/MC_EBP/.  /lustre/edroque/Greedy_Reconstruction/MC_EBP
+cp -r /home/edroque/Greedy_Reconstruction/MC_EBP/  /lustre/home/edroque/Greedy_Reconstruction/MC_EBP 
 
-cd /lustre/edroque/Greedy_Reconstruction/MC_EBP
+cd /lustre/edroque/Greedy_Reconstruction/MC_EBP 
 
-python mp_nc.py > saida.txt
+python mp_nc.py > saida

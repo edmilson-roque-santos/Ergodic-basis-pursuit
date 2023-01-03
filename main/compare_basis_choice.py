@@ -53,8 +53,11 @@ def out_dir_ortho(net_name, exp_name, params):
     out_results_direc = os.path.join(out_results_direc, exp_name)
     out_results_direc = os.path.join(out_results_direc, '')
     if os.path.isdir(out_results_direc ) == False:
-        os.makedirs(out_results_direc)
         
+        try:
+            os.makedirs(out_results_direc)
+        except:
+            'Folder has already been created'
     #For coupling analysis it is necessary to save each orthonormal function 
     #with respect to this coupling.
     filename = 'onf_deg_{}_lgth_ts_{}_coupling_{}_crossed_{}_seed_{}'.format(params['max_deg_monomials'],
@@ -220,9 +223,11 @@ def out_dir(net_name, exp_name):
     out_results_direc = os.path.join(out_results_direc, exp_name)
     out_results_direc = os.path.join(out_results_direc, '')
     
-    if os.path.isdir(out_results_direc ) == False:
-        os.makedirs(out_results_direc)
-
+    if os.path.isdir(out_results_direc) == False:
+        try:
+            os.makedirs(out_results_direc)
+        except:
+            'Folder has already been created'
     return out_results_direc
 
 def compare_setup(exp_name, net_name, lgth_endpoints, random_seed = 1, 
