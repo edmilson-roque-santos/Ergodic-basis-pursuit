@@ -5,6 +5,7 @@ import cvxpy as cp
 import networkx as nx 
 import numpy as np
 import os
+from tqdm import tqdm
 
 from EBP import tools, net_dyn, optimizer
 from EBP.base_polynomial import pre_settings as pre_set 
@@ -16,6 +17,16 @@ from EBP import greedy_algorithms as gnr_alg
 solver_default = cp.ECOS
 VERBOSE = True
 completing_on = False     #Boolean: to complete the coefficient matrix at each node
+
+
+tqdm_par = {
+"unit": "it",
+"unit_scale": 1,
+"ncols": 80,
+"bar_format": "[Reconstructing progress] {percentage:2.0f}% |{bar}| {n:.1f}/{total:.1f}  [{rate_fmt}, {remaining_s:.1f}s rem]",
+"smoothing": 0
+}
+
 
 def reconstr(X_t_, params, solver_optimization = solver_default):
     '''
@@ -104,7 +115,7 @@ def reconstr(X_t_, params, solver_optimization = solver_default):
     x_eps_dict['params'] = params_.copy()
                
     B_ = B.copy()
-    for id_node in id_trial:
+    for id_node in tqdm(id_trial, **tqdm_par):
         b = B_[:, id_node]
         try:
             x_eps, num_nonzeros_vec = optimizer.l_1_optimization(b, PHI, 

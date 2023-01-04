@@ -9,6 +9,8 @@ Created on --- 2020
 import cvxpy as cp
 import numpy as np
 
+VERBOSE = False
+
 def l_1_optimization(b, PHI, noisy_measurement, params, solver_default = cp.ECOS):
     '''
     
@@ -49,10 +51,12 @@ def l_1_optimization(b, PHI, noisy_measurement, params, solver_default = cp.ECOS
         # Form and solve problem.
         prob = cp.Problem(obj, constraints)
         prob.solve(solver=solver_default,verbose=False)
+       
+        if VERBOSE:            
+            print("status: {}".format(prob.status))
         
-                   
-        print("status: {}".format(prob.status))
         if(prob.status == 'infeasible'):
+            print("status: {}".format(prob.status))
             return np.ones(number_of_coefficients)*1e-15, 'infeasible'
         
         if not (prob.status == 'infeasible'):
@@ -60,12 +64,13 @@ def l_1_optimization(b, PHI, noisy_measurement, params, solver_default = cp.ECOS
                 sparse_vector = c.value/(params['norm_column'][: number_of_coefficients]*np.sqrt(M))  
             else:
                 sparse_vector = c.value/(np.sqrt(M))
-                
-            # Number of nonzero elements in the solution (its cardinality or diversity).
             nnz_l1 = (np.absolute(sparse_vector) > delta).sum()
-            print('Found a feasible x in R^{} that has {} nonzeros.'.format(number_of_coefficients, nnz_l1))
-            print("optimal objective value: {}".format(obj.value))
-        
+           
+            if VERBOSE:
+                # Number of nonzero elements in the solution (its cardinality or diversity).
+                print('Found a feasible x in R^{} that has {} nonzeros.'.format(number_of_coefficients, nnz_l1))
+                print("optimal objective value: {}".format(obj.value))
+            
             return sparse_vector, nnz_l1
             
     if noisy_measurement:
@@ -91,6 +96,7 @@ def l_1_optimization(b, PHI, noisy_measurement, params, solver_default = cp.ECOS
         prob.solve(solver=solver_default, verbose=False)
         #CVXOPT
         if(prob.status == 'infeasible'):
+            print("status: {}".format(prob.status))
             return np.ones(number_of_coefficients)*1e-15, 'infeasible'                
 
         if not (prob.status == 'infeasible'):
@@ -98,6 +104,7 @@ def l_1_optimization(b, PHI, noisy_measurement, params, solver_default = cp.ECOS
                 sparse_vector = c.value/(params['norm_column'][: number_of_coefficients]*np.sqrt(M))  
             else:
                 sparse_vector = c.value/(np.sqrt(M))
+                
                 
             # Number of nonzero elements in the solution (its cardinality or diversity).
             nnz_l1 = (np.absolute(sparse_vector) > delta).sum()

@@ -6,10 +6,19 @@ from numpy import linalg as LA
 import scipy.special
 from scipy.integrate import quad
 import sympy as spy
-import time
+#import time
 
+from tqdm import tqdm
 
 from ..tools import SympyDict
+
+tqdm_par = {
+"unit": "it",
+"unit_scale": 1,
+"ncols": 80,
+"bar_format": "[Orthonormalizing progress] {percentage:2.0f}% |{bar}| {n:.1f}/{total:.1f}  [{rate_fmt}, {remaining_s:.1f}s rem]",
+"smoothing": 0
+}
 
     
 def poly(order):
@@ -853,8 +862,8 @@ def poly_orthonormal_PHI(X_t, params, power_indices):
     
     symbolic_PHI.append(sym_f(tuple(x_t)))
     
-    for l in range(1, power_indices.shape[0]):
-        start_time = time.time()
+    for l in tqdm(range(1, power_indices.shape[0]), **tqdm_par):
+        #start_time = time.time()
 
         func, params = spy_gram_schmidt(tuple(power_indices[l, :]), params,
                                        power_indices)
@@ -873,8 +882,8 @@ def poly_orthonormal_PHI(X_t, params, power_indices):
         R[:, l] = get_coeff_matrix_wrt_basis(sym_f(tuple(x_t)), 
                                                        dict_canonical_basis_functions)
         
-        end_time = time.time()
-        print(l, (end_time - start_time)/60, '\n')
+        #end_time = time.time()
+        #print(l, (end_time - start_time)/60, '\n')
     #Adapt params dictionary to include the symbolic version of orthonormal functions
     params['symbolic_PHI'] = symbolic_PHI
     
@@ -944,7 +953,7 @@ def reduced_poly_orthonormal_PHI(X_t, params, reduced_pindex):
     l = 1
     
     #start_time = time.time()
-    for num_var in range(1, 3):    
+    for num_var in tqdm(range(1, 3),**tqdm_par):    
         one_enter = True
        
         #Create a list of all permutations in the exp_vec_initial
