@@ -98,7 +98,7 @@ def triage_params(params):
     parameters['use_lebesgue'] = params.get('use_lebesgue', False)
     
     #To estime the kernel density function
-    parameters['use_kernel'] = params.get('use_kernel', False) 
+    parameters['use_kernel'] = params.get('use_kernel', True) 
     
     #To use one-dimensional integration
     parameters['use_integral_1d'] = params.get('use_integral_1d', True)
