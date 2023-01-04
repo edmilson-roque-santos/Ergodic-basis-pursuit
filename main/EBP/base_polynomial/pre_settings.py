@@ -46,6 +46,9 @@ def create_orthnormfunc_kde(params, save_orthnormfunc = True):
         parameters['orthnorm_func_filename'] = params['orthnorm_func_filename']
         
     if(parameters['use_orthonormal']):
+        #It creates the library matrix associates to the orthonormal function.
+        #The expression of the orthonormal functions are saved inside parameters['orthnormfunc']
+        #The symbolic expressions are saved in  parameters['symbolic_PHI']
         PHI, parameters = polb.library_matrix(X_t, parameters)
     
     return parameters['orthnormfunc']
