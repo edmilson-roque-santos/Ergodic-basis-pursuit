@@ -12,19 +12,27 @@ import sympy as spy
 
 def net_dynamics(x, args):
     '''
-    
+    Iterates the network dynamics at one time step.    
 
     Parameters
     ----------
-    x : TYPE
-        DESCRIPTION.
-    args : TYPE
-        DESCRIPTION.
-
+    x : numpy array - shape (N,)
+        State at time step t.
+    args : dict
+    Dictionary with network dynamics information content.
+    Keys: 
+        'coupling' : float
+            coupling strength
+        'max_degree' : int
+            maximum degree of the network
+        'f' : function
+            isolated map
+        'h' : function
+            coupling function
     Returns
     -------
-    TYPE
-        DESCRIPTION.
+    numpy array
+        Next state at time step t + 1.
 
     '''
     Lambda = args['coupling']
@@ -36,45 +44,62 @@ def net_dynamics(x, args):
         
 def gen_net_dynamics(number_of_iterations, args, use_noise = False):
     '''
-    
+    It generates a trajectory of the network dynamics with length given by
+    "number_of_iterations". The initial condition is given by a uniform
+    random distribution in the half-open interval [0.0, 1.0).
 
     Parameters
     ----------
     number_of_iterations : TYPE
         DESCRIPTION.
-    args : TYPE
-        DESCRIPTION.
-
+    args : dict
+        Dictionary with network dynamics information content.
+        Keys: 
+            'random_seed' : int
+                Seed for the pseudo random generator.
+            'adj_matrix' : numpy array
+                Adjacency matrix 
+            'eps' : float
+                noise magnitude
+            'coupling' : float
+                coupling strength
+            'max_degree' : int
+                maximum degree of the network
+            'f' : function
+                isolated map
+            'h' : function
+                coupling function
+    use_noise : boolean
+        Add dynamical noise to the network dynamics.
     Returns
     -------
-    time_series : TYPE
-        DESCRIPTION.
+    time_series : numpy array
+        Multivariate time series of the network dynamics.
 
     '''
-    random_seed = args.get('random_seed', 1)
-    rng = default_rng(random_seed)
+    random_seed = args.get('random_seed', 1) 
+    rng = default_rng(random_seed)  #Initializes an instance of the pseudo random generator;
     
     A = args['adj_matrix']
     
-    N = A.shape[0]
+    N = A.shape[0] #Number of vertices
     
     time_series  = np.zeros((int(number_of_iterations), N))
-    
-    initial_condition = rng.random(N)
-    initial_condition = np.asarray(initial_condition, dtype=np.float64)
-     
     x_state = np.zeros(N)
+    initial_condition = rng.random(N) #Random initial condition
+    initial_condition = np.asarray(initial_condition, dtype=np.float64)
     
     iterator = range(1, int(number_of_iterations))
 
     time_series[0, :] = initial_condition 
-    x_state = initial_condition
+    x_state = initial_condition.copy()
     
     for i in iterator: 
         x_state = net_dynamics(x_state, args)
+        #To add dynamical noise, it is given as
         if use_noise:
             x_state = x_state + args['eps']*rng.random(N)
-        time_series[i, :] = x_state
+        time_series[i, :] = x_state.copy()
         
     return time_series
 
