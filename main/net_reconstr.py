@@ -37,7 +37,21 @@ def reconstr(X_t_, params, solver_optimization = solver_default):
     -------
     net_dict : dict
         Dictionary encoding Adjacency matrix, Graph structure and Library matrix.
-
+        Keys: 
+            'G' : networkx Graph
+                Reconstructed graph structure 
+            'A' : numpy array
+                Reconstructed adjacency matrix
+            'PHI' : numpy array
+                Library matrix
+            'PHI.T PHI' : numpy array
+                Library matrix multiplied by its transpose
+            'params' : dict
+                Core dictionary of the code to track the relevant information of the reconstruction.
+            'info_x_eps' : dict
+                Trace the reconstruction for each node. Save the information of the coefficient vector of each node.
+            'x_eps_matrix' : numpy array
+                Final coefficient matrix after the reconstruction.
     '''
     params_ = params.copy()
     params_['nodelist'] = np.arange(0, X_t_.shape[1], 1, dtype = int)
