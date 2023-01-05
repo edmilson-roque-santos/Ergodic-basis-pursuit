@@ -709,13 +709,14 @@ def plot_comparison_analysis(ax, exp_dictionary, net_name, plot_legend):
     std_FN_comparison = FN_comparison.std(axis = 0)    
     
     
-    '''
+    
     lab_opto.plot_false_proportion(ax, lgth_vector, avge_FP_comparison, std_FP_comparison, True, plot_legend)
     ax.set_ylabel(r'FP')
     plt.setp(ax.get_xticklabels(), visible=True)
     '''
     lab_opto.plot_false_proportion(ax, lgth_vector, avge_FN_comparison, std_FN_comparison, True, True)
     ax.set_ylabel(r'FN')
+    '''
     ax.set_xlabel(r'$n$')
     
 def plot_comparison_n_critical(ax, exp_dictionary, net_class, plot_legend):    
@@ -866,11 +867,12 @@ def ring_net_plot_script(Nseeds = 10):
     exps_dictionary, title = ring_N_16(net_name = 'ring_graph_N=16', Nseeds = Nseeds)
     plot_lgth_dependence('ring_graph_N=16', exps_dictionary, title, filename = None)
 
-def star_graph(exps_name, size_endpoints, net_class = 'star_graph'):
+def exp_setting_n_c(exps_name, size_endpoints, net_class = 'ring_graph', Nseeds = 10):
     title = ['b) deg 3']
     exps_dictionary = dict()
     
     for id_exp in range(len(exps_name)):
+        exps_dictionary[id_exp] = dict()
         size_endpoints = size_endpoints[id_exp]
 
         exp_name = exps_name[id_exp]
@@ -880,15 +882,26 @@ def star_graph(exps_name, size_endpoints, net_class = 'star_graph'):
         
         if os.path.isdir(out_results_direc ) == False:
             print("Failed to find the desired result folder !")
-            
-        filename = "size_endpoints_{}_{}_{}".format(size_endpoints[0], size_endpoints[1],
-                                                    size_endpoints[2]) 
         
-        if os.path.isfile(out_results_direc+filename+".hdf5"):
-            out_results_hdf5 = h5dict.File(out_results_direc+filename+".hdf5", 'r')
-            exp_dictionary = out_results_hdf5.to_dict()  
-            out_results_hdf5.close()
-        exps_dictionary[id_exp] = exp_dictionary
+        for seed in range(1, Nseeds + 1):    
+            exps_dictionary[id_exp][seed] = dict()
+            
+            filename = "size_endpoints_{}_{}_{}_seed_{}".format(size_endpoints[0], size_endpoints[1],
+                                                        size_endpoints[2], seed) 
+            
+            if os.path.isfile(out_results_direc+filename+".hdf5"):
+                try:
+                    out_results_hdf5 = h5dict.File(out_results_direc+filename+".hdf5", 'r')
+                    exp_dictionary = out_results_hdf5.to_dict()  
+                    out_results_hdf5.close()
+                except:
+                    print('Failed to open the desired file!')    
+                    exp_dictionary = dict()
+            else:
+                print('Failed to find the desired file!')
+                
+                print(out_results_direc+filename+".hdf5")
+            exps_dictionary[id_exp][seed] = exp_dictionary
 
     return exps_dictionary, title  
 
@@ -922,12 +935,15 @@ def test_rgraph(rs):
 
     return exp_dictionary
 
-def star_graph_plot_script():
+def n_c_plot_script(Nseeds = 10):
     exps_name = ['growing_net_deg_3_3_99_0_001_N']
     size_endpoints = [[3, 51, 5]]
-    exps_dictionary, title = star_graph(exps_name, size_endpoints, net_class = 'star_graph')
-    plot_n_c_size(exps_dictionary, title, filename = None)
-
+    exps_dictionary, title = exp_setting_n_c(exps_name, size_endpoints, 
+                                             net_class = 'ring_graph',
+                                             Nseeds = Nseeds)
+    
+    #plot_n_c_size(exps_dictionary, title, filename = None)
+    return exps_dictionary
     
 def ring_graph_script(rs):
     '''

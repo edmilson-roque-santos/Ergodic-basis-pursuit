@@ -20,6 +20,8 @@ tqdm_par = {
 "smoothing": 0
 }
 
+tqdm_par_red = tqdm_par.copy()
+tqdm_par_red['bar_format'] = "[Orthonormalizing from reduced progress] {percentage:2.0f}% |{bar}| {n:.1f}/{total:.1f}  [{rate_fmt}, {remaining_s:.1f}s rem]"
     
 def poly(order):
     '''
@@ -953,7 +955,7 @@ def reduced_poly_orthonormal_PHI(X_t, params, reduced_pindex):
     l = 1
     
     #start_time = time.time()
-    for num_var in tqdm(range(1, 3),**tqdm_par):    
+    for num_var in tqdm(range(1, 3),**tqdm_par_red):    
         one_enter = True
        
         #Create a list of all permutations in the exp_vec_initial
