@@ -1,0 +1,9 @@
+{(0, 0, 0): '1.0', (1, 0, 0): "Add(Mul(Float('3.0514566136447705', precision=53), Symbol('x_0')), Float('-1.6156634603924118', precision=53))",
+ (2, 0, 0): "Add(Mul(Float('12.374853281057762', precision=53), Pow(Symbol('x_0'), Integer(2))), Mul(Integer(-1), Float('12.661327256162558', precision=53), Symbol('x_0')), Float('1.9056420283127102', precision=53))",
+ (3, 0, 0): "Add(Mul(Float('49.507284262660555', precision=53), Pow(Symbol('x_0'), Integer(3))), Mul(Integer(-1), Float('75.96575965856411', precision=53), Pow(Symbol('x_0'), Integer(2))), Mul(Float('30.511895873353733', precision=53), Symbol('x_0')), Float('-2.3040858578120851', precision=53))",
+ (0, 1, 0): "Add(Mul(Float('3.0514566136447705', precision=53), Symbol('x_1')), Float('-1.6156634603924118', precision=53))",
+ (0, 2, 0): "Add(Mul(Float('12.374853281057762', precision=53), Pow(Symbol('x_1'), Integer(2))), Mul(Integer(-1), Float('12.661327256162558', precision=53), Symbol('x_1')), Float('1.9056420283127102', precision=53))",
+ (0, 3, 0): "Add(Mul(Float('49.507284262660555', precision=53), Pow(Symbol('x_1'), Integer(3))), Mul(Integer(-1), Float('75.96575965856411', precision=53), Pow(Symbol('x_1'), Integer(2))), Mul(Float('30.511895873353733', precision=53), Symbol('x_1')), Float('-2.3040858578120851', precision=53))",
+ (0, 0, 1): "Add(Mul(Float('3.0514566136447705', precision=53), Symbol('x_2')), Float('-1.6156634603924118', precision=53))",
+ (0, 0, 2): "Add(Mul(Float('12.374853281057762', precision=53), Pow(Symbol('x_2'), Integer(2))), Mul(Integer(-1), Float('12.661327256162558', precision=53), Symbol('x_2')), Float('1.9056420283127102', precision=53))",
+ (0, 0, 3): "Add(Mul(Float('49.507284262660555', precision=53), Pow(Symbol('x_2'), Integer(3))), Mul(Integer(-1), Float('75.96575965856411', precision=53), Pow(Symbol('x_2'), Integer(2))), Mul(Float('30.511895873353733', precision=53), Symbol('x_2')), Float('-2.3040858578120851', precision=53))"}

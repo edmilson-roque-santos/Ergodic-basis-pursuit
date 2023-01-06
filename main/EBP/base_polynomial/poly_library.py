@@ -970,17 +970,17 @@ def reduced_poly_orthonormal_PHI(X_t, params, reduced_pindex):
                 num_basis = order + 1
                 
             #Pairwise functions
-            if params['expansion_crossed_terms']:
-                if (num_var > 1) and (one_enter):
-                    start = num_basis
-                    num_basis_ = scipy.special.comb(2, 2, exact = True)*scipy.special.comb(order, 2, exact = True)
-                    num_basis = start + int(round(num_basis_))
-                    one_enter = False
-                
-            else: 
-                start = 1
-                num_basis = 1
-                
+            if (num_var > 1):
+                if (params['expansion_crossed_terms']): 
+                    if (one_enter):
+                        start = num_basis
+                        num_basis_ = scipy.special.comb(2, 2, exact = True)*scipy.special.comb(order, 2, exact = True)
+                        num_basis = start + int(round(num_basis_))
+                        one_enter = False
+                else: 
+                    start = 1
+                    num_basis = 1
+                    
             for idex in range(start, num_basis):
                 
                 #Select a exponent array
@@ -1085,7 +1085,9 @@ def library_matrix(X_t, params):
         
         if not crossed_terms_condition:
             for deg in range(1, order + 1):
-                PHI[:, 1 + (deg - 1)*N : 1 + deg*N] = poly(deg)(X_t)/np.sqrt(M)
+                index_vec = np.arange(1, L, order) + (deg - 1)
+                #PHI[:, 1 + (deg - 1)*N : 1 + deg*N] = poly(deg)(X_t)/np.sqrt(M)
+                PHI[:, index_vec] = poly(deg)(X_t)/np.sqrt(M)
                 
             if(normalization):
                 norm_column = LA.norm(PHI, axis = 0)

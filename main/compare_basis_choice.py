@@ -104,7 +104,7 @@ def compare_script(script_dict):
     parameters['random_seed'] = script_dict.get('random_seed', 1)
     parameters['network_name'] = script_dict['net_name']
     parameters['max_deg_monomials'] = 3
-    parameters['expansion_crossed_terms'] = True
+    parameters['expansion_crossed_terms'] = False
     
     parameters['use_kernel'] = True
     parameters['noisy_measurement'] = False
@@ -127,7 +127,7 @@ def compare_script(script_dict):
     
     r = 3.990
     net_dynamics_dict['f'] = lambda x: r*x*(1 - x)
-    net_dynamics_dict['h'] = lambda x: (x**1)*(A.T @ x**1)
+    net_dynamics_dict['h'] = lambda x: (A.T @ x**2)#(x**1)*(A.T @ x**1)
     net_dynamics_dict['max_degree'] = np.max(np.sum(A, axis=0))
     net_dynamics_dict['coupling'] = parameters['coupling']#*net_dynamics_dict['max_degree']
     net_dynamics_dict['random_seed'] = parameters['random_seed']
@@ -378,7 +378,8 @@ def determine_critical_n(exp_param, size, exp_name, net_class, id_trial = None,
     #tools.star_graph(size, 'network_structure/'+net_name)
     tools.ring_graph(size, 'network_structure/'+net_name)
     
-    lgth_time_series_vector = np.arange(5, 3*size**2, 5, dtype = int)
+    size_step = int(np.round(size/10))
+    lgth_time_series_vector = np.arange(5, 3*size**2, size_step, dtype = int)
     id_, max_iterations = 0, 100
     
     find_critical = True
@@ -397,7 +398,6 @@ def determine_critical_n(exp_param, size, exp_name, net_class, id_trial = None,
         net_dict = compare_script(script_dict)
         FP, FN = quick_comparison(net_dict, net_name)
         print('FP, FN:', FP, FN)
-        print('A', net_dict['A'][:, 0])
         if (FP == 0) and (FN == 0):
             find_critical = False
             print('Net Recovered!')
@@ -983,9 +983,9 @@ def ring_graph_script(rs):
     None.
 
     '''
-    exp_name = 'growing_net_deg_3_3_99_0_001_N'
+    exp_name = 'gnet_deg_3_3_99_deg_3'#'growing_net_deg_3_3_99_0_001_N'
     net_class = 'ring_graph'
-    size_endpoints = [3, 51, 5]
+    size_endpoints = [10, 1001, 100]
     id_trial = None #np.array([0])
     compare_setup_critical_n(exp_name, net_class, size_endpoints, id_trial, 
                              random_seed = rs, save_full_info = False)
@@ -998,9 +998,12 @@ def test_plot_script():
     plot_n_c_size(exps_dictionary, title, filename = None)
 
     
-def test_script():
+def test_script(rs):
     exp_name = 'test_ring_2'
     net_class = 'ring_graph'
-    size_endpoints = [3, 51, 5]
+    size_endpoints = [10, 1001, 100]
     id_trial = None #np.array([0])
-    compare_setup_critical_n(exp_name, net_class, size_endpoints, id_trial,save_full_info = False)    
+    exp_dictionary = compare_setup_critical_n(exp_name, net_class, size_endpoints, 
+                             id_trial, random_seed = rs, 
+                             save_full_info = False)    
+    return exp_dictionary
