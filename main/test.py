@@ -15,11 +15,11 @@ from EBP.base_polynomial import triage as trg
 import lab_opto_electronic as lab_opto
 
 def num_basis_compare():
-    N_vec = np.arange(3, 5, 1, dtype = int)
-    r_vec = np.arange(1, 4)
+    N_vec = np.arange(3, 100, 1, dtype = int)
+    r_vec = np.arange(2, 3)
     
     
-    r = r_vec[2]
+    r = r_vec[0]
     
     L_new = np.empty(N_vec.size)
     L_old = np.empty(N_vec.size)

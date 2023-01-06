@@ -580,7 +580,7 @@ def compare_basis_net_size(exp_dictionary, net_class):
         n_critical for each length of time series.
     
     '''
-    exp_vec = exp_dictionary['exp_params'].keys()
+    exp_vec = list(exp_dictionary['exp_params'].keys())
     size_endpoints = exp_dictionary['size_endpoints']
     
     size_vector = np.arange(size_endpoints['0'], size_endpoints['1'],
@@ -588,11 +588,11 @@ def compare_basis_net_size(exp_dictionary, net_class):
     
     n_critical_comparison = np.zeros((len(exp_vec), size_vector.shape[0]))
     
-    for exp_ in exp_vec:
+    for id_exp in range(len(exp_vec)):
         for id_key in range(len(size_vector)):
             key = size_vector[id_key]
-            n_critical = exp_dictionary[exp_][key]['n_critical']
-            n_critical_comparison[exp_, id_key] = n_critical
+            n_critical = exp_dictionary[exp_vec[id_exp]]['{}'.format(key)]['n_critical']
+            n_critical_comparison[id_exp, id_key] = n_critical
             
             
     return size_vector, n_critical_comparison
@@ -656,8 +656,8 @@ def ax_plot_true_net(ax, G_true, pos_true, probed_node = 0,
 def ax_plot_star_graph(ax, plot_net_alone=False):
     
     N = 10
-    G_true = nx.star_graph(N, create_using=nx.Graph())
-    pos_true = nx.spring_layout(G_true)
+    G_true = nx.cycle_graph(N, create_using=nx.Graph())
+    pos_true = nx.circular_layout(G_true)
     nx.draw_networkx_nodes(G_true, pos = pos_true,
                            ax = ax, node_color = colors[3], 
                            linewidths= 1.0,
@@ -669,13 +669,14 @@ def ax_plot_star_graph(ax, plot_net_alone=False):
                            ax = ax,
                            alpha = 1.0)
     
+    '''
     nx.draw_networkx_nodes(G_true, pos = pos_true,
                             ax = ax,
                             nodelist=[0],
                             node_color = colors[3], 
                             node_size = 200,
                             alpha = 1.0)
-        
+    '''    
     nx.draw_networkx_edges(G_true,pos = pos_true, 
                            ax = ax,
                            edgelist = list(G_true.edges()), 
@@ -721,10 +722,31 @@ def plot_comparison_analysis(ax, exp_dictionary, net_name, plot_legend):
     
 def plot_comparison_n_critical(ax, exp_dictionary, net_class, plot_legend):    
     
-    size_vector, n_critical_comparison = compare_basis_net_size(exp_dictionary, 
+    seeds = list(exp_dictionary.keys())
+    Nseeds = int(len(seeds))
+    
+    size_endpoints = exp_dictionary[seeds[0]]['size_endpoints']
+    size_vector = np.arange(size_endpoints['0'], size_endpoints['1'],
+                                      size_endpoints['2'], dtype = int)
+    
+    n_c_comparison = np.zeros((Nseeds, 2, size_vector.shape[0]))
+    
+    
+    for id_seed in range(Nseeds):
+        size_vector, n_c_comparison[id_seed, :, :] = compare_basis_net_size(exp_dictionary[seeds[id_seed]], 
                                                                         net_class)
     
-    lab_opto.plot_false_proportion(ax, size_vector, n_critical_comparison, plot_legend)
+    avge_nc_comparison = n_c_comparison.mean(axis = 0)    
+    std_nc_comparison = n_c_comparison.std(axis = 0)     
+        
+    lab_opto.plot_false_proportion(ax, size_vector, avge_nc_comparison, 
+                                   std_nc_comparison, True, plot_legend)
+    
+    delta = 10
+    N_vector = np.arange(size_endpoints['0'] + delta, size_endpoints['1'] - 3 - delta, 0.1)
+    ax.plot(N_vector, 20*np.log(N_vector), 'k--', lw = 1)
+    ax.set_xscale('log')
+
     ax.set_ylabel(r'$n_c$')
     plt.setp(ax.get_xticklabels(), visible=True)
     
@@ -785,7 +807,7 @@ def plot_lgth_dependence(net_name, exps_dictionary, title, filename = None):
 
 def plot_n_c_size(exps_dictionary, title, filename = None):    
     
-    net_class = 'star_graph'
+    net_class = 'ring_graph'
     
     keys = list(exps_dictionary.keys())
     n_cols = int(len(keys))
@@ -894,14 +916,15 @@ def exp_setting_n_c(exps_name, size_endpoints, net_class = 'ring_graph', Nseeds 
                     out_results_hdf5 = h5dict.File(out_results_direc+filename+".hdf5", 'r')
                     exp_dictionary = out_results_hdf5.to_dict()  
                     out_results_hdf5.close()
+                    exps_dictionary[id_exp][seed] = exp_dictionary
                 except:
                     print('Failed to open the desired file!')    
-                    exp_dictionary = dict()
+                    #exp_dictionary = dict()
+                    del exps_dictionary[id_exp][seed]
             else:
                 print('Failed to find the desired file!')
                 
                 print(out_results_direc+filename+".hdf5")
-            exps_dictionary[id_exp][seed] = exp_dictionary
 
     return exps_dictionary, title  
 
@@ -942,7 +965,7 @@ def n_c_plot_script(Nseeds = 10):
                                              net_class = 'ring_graph',
                                              Nseeds = Nseeds)
     
-    #plot_n_c_size(exps_dictionary, title, filename = None)
+    plot_n_c_size(exps_dictionary, title, filename = None)
     return exps_dictionary
     
 def ring_graph_script(rs):
