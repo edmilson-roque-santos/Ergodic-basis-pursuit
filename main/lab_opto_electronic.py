@@ -1274,7 +1274,7 @@ def plot_false_proportion(ax, lgth_vector, f_comp_vec, std, plot_std = True,
     #colors = ['tab:purple', 'tab:orange', '#24AD7A']
     
     #For ring plot, I selected only norm cols and EBP
-    labels = ['normcols', 'EBP']
+    labels = ['BP', 'EBP'] #'normcols'
     markers = ['s', 'o']
     colors = ['tab:purple', '#24AD7A']
     

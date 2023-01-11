@@ -375,9 +375,13 @@ def determine_critical_n(exp_param, size, exp_name, net_class, id_trial = None,
 
     '''
     net_name = net_class+"_{}".format(size)
-    #tools.star_graph(size, 'network_structure/'+net_name)
-    tools.ring_graph(size, 'network_structure/'+net_name)
     
+    if not os.path.isfile('network_structure/'+net_name):
+        try:
+            tools.ring_graph(size, 'network_structure/'+net_name)
+        except:
+            print("There is already a net!")
+            
     size_step = int(np.round(size/10))
     lgth_time_series_vector = np.arange(5, 3*size**2, size_step, dtype = int)
     id_, max_iterations = 0, 100
@@ -983,9 +987,9 @@ def ring_graph_script(rs):
     None.
 
     '''
-    exp_name = 'gnet_deg_3_3_99_deg_3'#'growing_net_deg_3_3_99_0_001_N'
+    exp_name = 'gnet_deg_3_3_99_deg_1'#'growing_net_deg_3_3_99_0_001_N'
     net_class = 'ring_graph'
-    size_endpoints = [10, 1001, 100]
+    size_endpoints = [10, 555, 55]
     id_trial = None #np.array([0])
     compare_setup_critical_n(exp_name, net_class, size_endpoints, id_trial, 
                              random_seed = rs, save_full_info = False)
