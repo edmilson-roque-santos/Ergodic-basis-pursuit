@@ -750,8 +750,9 @@ def plot_comparison_n_critical(ax, exp_dictionary, net_class, plot_legend):
     N_vector = np.arange(size_endpoints['0'] + delta, size_endpoints['1'] - 3 - delta, 0.1)
     ax.plot(N_vector, 20*np.log(N_vector), 'k--', lw = 1)
     ax.set_xscale('log')
+    
 
-    ax.set_ylabel(r'$n_c$')
+    ax.set_ylabel(r'$n_0$')
     plt.setp(ax.get_xticklabels(), visible=True)
     
     #lab_opto.plot_false_proportion(ax[1], lgth_vector, FN_comparison, True)
@@ -963,8 +964,8 @@ def test_rgraph(rs):
     return exp_dictionary
 
 def n_c_plot_script(Nseeds = 10):
-    exps_name = ['growing_net_deg_3_3_99_0_001_N']
-    size_endpoints = [[3, 51, 5]]
+    exps_name = ['gnet_deg_3_3_99_deg_1']#['growing_net_deg_3_3_99_0_001_N']
+    size_endpoints = [[10, 555, 55]]#[[3, 51, 5]]
     exps_dictionary, title = exp_setting_n_c(exps_name, size_endpoints, 
                                              net_class = 'ring_graph',
                                              Nseeds = Nseeds)
