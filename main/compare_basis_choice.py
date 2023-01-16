@@ -657,9 +657,9 @@ def ax_plot_true_net(ax, G_true, pos_true, probed_node = 0,
     if plot_net_alone:
         ax.set_title('{}'.format('Original Network'))
 
-def ax_plot_star_graph(ax, plot_net_alone=False):
+def ax_plot_ring_graph(ax, plot_net_alone=False):
     
-    N = 10
+    N = 16
     G_true = nx.cycle_graph(N, create_using=nx.Graph())
     pos_true = nx.circular_layout(G_true)
     nx.draw_networkx_nodes(G_true, pos = pos_true,
@@ -752,7 +752,7 @@ def plot_comparison_n_critical(ax, exp_dictionary, net_class, plot_legend):
     ax.set_xscale('log')
     
 
-    ax.set_ylabel(r'$n_0$')
+    ax.set_ylabel(r'$n_c$')
     plt.setp(ax.get_xticklabels(), visible=True)
     
     #lab_opto.plot_false_proportion(ax[1], lgth_vector, FN_comparison, True)
@@ -826,7 +826,7 @@ def plot_n_c_size(exps_dictionary, title, filename = None):
     
     ax_0 = fig.add_subplot(gs[0])
     
-    ax_plot_star_graph(ax_0)
+    ax_plot_ring_graph(ax_0)
     
     fig.suptitle(r'a) Original Network') 
     plot_legend = True
@@ -861,7 +861,7 @@ def ring_N_16(net_name = 'ring_graph_N=16', Nseeds = 10):
     #exps_name = ["gnr_logistc_compar_deg_2", "gnr_logistc_compar_deg_3"]
     #title = ['b) deg 2', 'c) deg 3']
     exps_name = ["logistic_lgth_3_99_0_001_N"]
-    title = ['b) deg 3']
+    title = [r'b) Dependence on $n$']
     exps_dictionary = dict()
     
     for id_exp in range(len(exps_name)):
@@ -894,13 +894,13 @@ def ring_net_plot_script(Nseeds = 10):
     exps_dictionary, title = ring_N_16(net_name = 'ring_graph_N=16', Nseeds = Nseeds)
     plot_lgth_dependence('ring_graph_N=16', exps_dictionary, title, filename = None)
 
-def exp_setting_n_c(exps_name, size_endpoints, net_class = 'ring_graph', Nseeds = 10):
-    title = ['b) deg 3']
+def exp_setting_n_c(exps_name, sizes_endpoints, net_class = 'ring_graph', Nseeds = 10):
+    title = ['b) deg 3', 'b) deg 3']
     exps_dictionary = dict()
     
     for id_exp in range(len(exps_name)):
         exps_dictionary[id_exp] = dict()
-        size_endpoints = size_endpoints[id_exp]
+        size_endpoints = sizes_endpoints[id_exp]
 
         exp_name = exps_name[id_exp]
         out_results_direc = os.path.join(folder_name, net_class)
@@ -995,14 +995,71 @@ def ring_graph_script(rs):
     compare_setup_critical_n(exp_name, net_class, size_endpoints, id_trial, 
                              random_seed = rs, save_full_info = False)
 
-
-def test_plot_script():
-    exps_name = ['test']
-    size_endpoints = [[3, 51, 5]]
-    exps_dictionary, title = star_graph(exps_name, size_endpoints, net_class = 'star_graph')
-    plot_n_c_size(exps_dictionary, title, filename = None)
-
+def fig_1_plot(exps, net_info, titles, filename = None):
     
+    
+    fig = plt.figure(figsize = (6, 6), dpi = 300)
+        
+    gs = GridSpec(nrows=2, ncols=2, figure=fig)
+    
+    #===========================================#
+    ax_0 = fig.add_subplot(gs[0, 0])
+    ax_plot_ring_graph(ax_0)
+    ax_0.set_title(r'a) Original Network') 
+    #===========================================#
+    
+    ax_1 = fig.add_subplot(gs[1, 0])
+    plot_comparison_analysis(ax_1, exps['lgth'][0], net_info['net_name'], False)
+    ax_1.set_title(titles['lgth'][0])
+    
+    #===========================================#
+    
+    keys = list(exps['n_c'].keys())
+    n_cols = int(len(keys))
+
+    plot_legend = True
+    for id_col in range(n_cols):
+        exp_dictionary = exps['n_c'][keys[id_col]]
+        ax1 = fig.add_subplot(gs[id_col, 1])
+        
+        plot_comparison_n_critical(ax1, exp_dictionary, net_info['net_class'], plot_legend)
+        if plot_legend:
+            plot_legend = False
+        ax1.set_title(titles['n_c'][id_col])
+    
+    gs.tight_layout(fig)
+    if filename == None:
+        plt.show()
+    else:
+     
+        plt.savefig(filename+".pdf", format='pdf', bbox_inches='tight')
+        
+    return     
+  
+
+def fig_1_setup(Nseeds = 10, filename = None):
+    
+    net_info = dict()
+    net_info['net_name'] = 'ring_graph_N=16'
+    net_info['net_class'] = 'ring_graph'
+    
+    exps = dict()
+    titles = dict()
+    
+    exps['lgth'], titles['lgth'] = ring_N_16(net_info['net_name'], Nseeds = Nseeds)
+    
+    exps_name = ['growing_net_deg_3_3_99_0_001_N','gnet_deg_3_3_99_deg_1']
+    size_endpoints = [[3, 51, 5], [10, 555, 55]]
+    
+    exps['n_c'], titles['n_c'] = exp_setting_n_c(exps_name, size_endpoints, 
+                                             net_class = net_info['net_class'],
+                                             Nseeds = Nseeds)
+    titles['n_c'] = [ r'c) $h(x, y) = x y$', r'd) $h(x, y) = y^2$']
+
+    fig_1_plot(exps, net_info, titles, filename = filename)
+   
+    return exps
+       
 def test_script(rs):
     exp_name = 'test_ring_2'
     net_class = 'ring_graph'
