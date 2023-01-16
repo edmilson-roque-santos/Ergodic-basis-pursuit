@@ -658,7 +658,21 @@ def ax_plot_true_net(ax, G_true, pos_true, probed_node = 0,
         ax.set_title('{}'.format('Original Network'))
 
 def ax_plot_ring_graph(ax, plot_net_alone=False):
-    
+    '''
+    Plot the ring graph
+
+    Parameters
+    ----------
+    ax : Matplotlib Axes object
+        Draw the graph in the specified Matplotlib axes.
+    plot_net_alone : boolean, optional
+        To plot the network itself outside an environment. The default is False.
+
+    Returns
+    -------
+    None.
+
+    '''
     N = 16
     G_true = nx.cycle_graph(N, create_using=nx.Graph())
     pos_true = nx.circular_layout(G_true)
@@ -673,14 +687,6 @@ def ax_plot_ring_graph(ax, plot_net_alone=False):
                            ax = ax,
                            alpha = 1.0)
     
-    '''
-    nx.draw_networkx_nodes(G_true, pos = pos_true,
-                            ax = ax,
-                            nodelist=[0],
-                            node_color = colors[3], 
-                            node_size = 200,
-                            alpha = 1.0)
-    '''    
     nx.draw_networkx_edges(G_true,pos = pos_true, 
                            ax = ax,
                            edgelist = list(G_true.edges()), 
@@ -694,7 +700,25 @@ def ax_plot_ring_graph(ax, plot_net_alone=False):
         ax.set_title('{}'.format('Original Network'))
 
 def plot_comparison_analysis(ax, exp_dictionary, net_name, plot_legend):    
-    
+    '''
+    To plot a comparison between EBP and BP for increasing the length of time series.
+
+    Parameters
+    ----------
+    ax : Matplotlib Axes object
+        Draw the graph in the specified Matplotlib axes.
+    exp_dictionary : dict
+        Dictionary carrying the information about the experiments to be plotted.
+    net_name : str
+        Network filename.
+    plot_legend : boolean
+        To plot the legend inside the ax panel.
+
+    Returns
+    -------
+    None.
+
+    '''
     seeds = list(exp_dictionary.keys())
     Nseeds = int(len(seeds))
     
@@ -725,7 +749,25 @@ def plot_comparison_analysis(ax, exp_dictionary, net_name, plot_legend):
     ax.set_xlabel(r'$n$')
     
 def plot_comparison_n_critical(ax, exp_dictionary, net_class, plot_legend):    
-    
+    '''
+    To plot the comparison between EBP and BP in the experiment: n_c vs N
+
+    Parameters
+    ----------
+    ax : Matplotlib Axes object
+        Draw the graph in the specified Matplotlib axes.
+    exp_dictionary : dict
+        Dictionary carrying the information about the experiments to be plotted.
+    net_class : str
+        Class of graph to be increased in order to perform the experiment.
+    plot_legend : boolean
+        To plot the legend inside the ax panel.
+
+    Returns
+    -------
+    None.
+
+    '''
     seeds = list(exp_dictionary.keys())
     Nseeds = int(len(seeds))
     
@@ -760,7 +802,26 @@ def plot_comparison_n_critical(ax, exp_dictionary, net_class, plot_legend):
     ax.set_xlabel(r'$N$')
     
 def plot_lgth_dependence(net_name, exps_dictionary, title, filename = None):    
-    
+    '''
+    Plot the reconstruction performance vs length of time series.
+
+
+    Parameters
+    ----------
+    net_name : str
+        Network filename.
+    exps_dictionary : dict
+        Dictionary carrying the information about the experiments to be plotted.
+    title : str
+        Title to be plotted.
+    filename : str, optional
+        Saving pdf filename. The default is None.
+
+    Returns
+    -------
+    None.
+
+    '''
     keys = list(exps_dictionary.keys())
     n_cols = int(len(keys))
     
@@ -773,17 +834,8 @@ def plot_lgth_dependence(net_name, exps_dictionary, title, filename = None):
     
     ax_0 = fig.add_subplot(gs[0])
     
-    G_true = nx.read_edgelist("network_structure/{}.txt".format(net_name),
-                        nodetype = int, create_using = nx.Graph)
-    N = len(nx.nodes(G_true))
-    A = nx.to_numpy_array(G_true, nodelist = list(range(N)))
-    A = np.asarray(A)
-    G_true = nx.from_numpy_array(A, create_using = nx.Graph)
-    pos_true = nx.circular_layout(G_true)
-    
-    ax_plot_true_net(ax_0, G_true, pos_true, probed_node = 0, 
-                     print_probed = False, plot_net_alone = False)
-    
+    ax_plot_ring_graph(ax_0)
+
     fig.suptitle(r'a) Original Network') 
     plot_legend = True
     for id_col in range(n_cols):
@@ -811,7 +863,23 @@ def plot_lgth_dependence(net_name, exps_dictionary, title, filename = None):
     return     
 
 def plot_n_c_size(exps_dictionary, title, filename = None):    
-    
+    '''
+    Plot the n_c vs N.
+
+    Parameters
+    ----------
+    exp_dictionary : dict
+        Dictionary carrying the information about the experiments to be plotted.
+    title : str
+        Title to be plotted.
+    filename : str, optional
+        Saving pdf filename. The default is None.
+
+    Returns
+    -------
+    None.
+
+    '''
     net_class = 'ring_graph'
     
     keys = list(exps_dictionary.keys())
@@ -851,152 +919,29 @@ def plot_n_c_size(exps_dictionary, title, filename = None):
         plt.savefig(filename+".pdf", format='pdf', bbox_inches='tight')
         
     return     
-  
-#=============================================================================#
-#Scripts
-#=============================================================================#
-def ring_N_16(net_name = 'ring_graph_N=16', Nseeds = 10):
-    
-    lgths_endpoints = [[10, 201, 5]]
-    #exps_name = ["gnr_logistc_compar_deg_2", "gnr_logistc_compar_deg_3"]
-    #title = ['b) deg 2', 'c) deg 3']
-    exps_name = ["logistic_lgth_3_99_0_001_N"]
-    title = [r'b) Dependence on $n$']
-    exps_dictionary = dict()
-    
-    for id_exp in range(len(exps_name)):
-        exps_dictionary[id_exp] = dict()
-        lgth_endpoints = lgths_endpoints[id_exp]
-        exp_name = exps_name[id_exp]
-        out_results_direc = os.path.join(folder_name, net_name)
-        out_results_direc = os.path.join(out_results_direc, exp_name)
-        out_results_direc = os.path.join(out_results_direc, '')
-        
-        if os.path.isdir(out_results_direc) == False:
-            print("Failed to find the desired result folder !")
-        
-        for seed in range(1, Nseeds + 1):
-            exps_dictionary[id_exp][seed] = dict()
-         
-            filename = "lgth_endpoints_{}_{}_{}_seed_{}".format(lgth_endpoints[0], lgth_endpoints[1],
-                                                        lgth_endpoints[2], seed) 
-            
-            if os.path.isfile(out_results_direc+filename+".hdf5"):
-                out_results_hdf5 = h5dict.File(out_results_direc+filename+".hdf5", 'r')
-                exp_dictionary = out_results_hdf5.to_dict()  
-                out_results_hdf5.close()
-            
-            exps_dictionary[id_exp][seed] = exp_dictionary
-    
-    return exps_dictionary, title
-
-def ring_net_plot_script(Nseeds = 10):
-    exps_dictionary, title = ring_N_16(net_name = 'ring_graph_N=16', Nseeds = Nseeds)
-    plot_lgth_dependence('ring_graph_N=16', exps_dictionary, title, filename = None)
-
-def exp_setting_n_c(exps_name, sizes_endpoints, net_class = 'ring_graph', Nseeds = 10):
-    title = ['b) deg 3', 'b) deg 3']
-    exps_dictionary = dict()
-    
-    for id_exp in range(len(exps_name)):
-        exps_dictionary[id_exp] = dict()
-        size_endpoints = sizes_endpoints[id_exp]
-
-        exp_name = exps_name[id_exp]
-        out_results_direc = os.path.join(folder_name, net_class)
-        out_results_direc = os.path.join(out_results_direc, exp_name)
-        out_results_direc = os.path.join(out_results_direc, '')
-        
-        if os.path.isdir(out_results_direc ) == False:
-            print("Failed to find the desired result folder !")
-        
-        for seed in range(1, Nseeds + 1):    
-            exps_dictionary[id_exp][seed] = dict()
-            
-            filename = "size_endpoints_{}_{}_{}_seed_{}".format(size_endpoints[0], size_endpoints[1],
-                                                        size_endpoints[2], seed) 
-            
-            if os.path.isfile(out_results_direc+filename+".hdf5"):
-                try:
-                    out_results_hdf5 = h5dict.File(out_results_direc+filename+".hdf5", 'r')
-                    exp_dictionary = out_results_hdf5.to_dict()  
-                    out_results_hdf5.close()
-                    exps_dictionary[id_exp][seed] = exp_dictionary
-                except:
-                    print('Failed to open the desired file!')    
-                    #exp_dictionary = dict()
-                    del exps_dictionary[id_exp][seed]
-            else:
-                print('Failed to find the desired file!')
-                
-                print(out_results_direc+filename+".hdf5")
-
-    return exps_dictionary, title  
-
-def ring_graph_lgth_script(rs):
-    '''
-    Script to generate an experiment of varying length of time series and
-    obtaining the network reconstruction.
-
-    Parameters
-    ----------
-    rs : int
-        Int for the seed of the random pseudo-generator.
-
-    Returns
-    -------
-    None.
-
-    '''
-    exp_name = 'logistic_lgth_3_99_0_001_N'
-    net_name = 'ring_graph_N=16'
-    lgth_endpoints = [10, 201, 5]
-    compare_setup(exp_name, net_name, lgth_endpoints, random_seed = rs, 
-                      save_full_info = False)
-
-def test_rgraph(rs):
-    exp_name = 'test_rgraph'
-    net_name = 'ring_graph_N=16'
-    lgth_endpoints = [90, 91, 5]
-    exp_dictionary = compare_setup(exp_name, net_name, lgth_endpoints, random_seed = rs, 
-                      save_full_info = True)
-
-    return exp_dictionary
-
-def n_c_plot_script(Nseeds = 10):
-    exps_name = ['gnet_deg_3_3_99_deg_1']#['growing_net_deg_3_3_99_0_001_N']
-    size_endpoints = [[10, 555, 55]]#[[3, 51, 5]]
-    exps_dictionary, title = exp_setting_n_c(exps_name, size_endpoints, 
-                                             net_class = 'ring_graph',
-                                             Nseeds = Nseeds)
-    
-    plot_n_c_size(exps_dictionary, title, filename = None)
-    return exps_dictionary
-    
-def ring_graph_script(rs):
-    '''
-    Script to generate an experiment of determining the critical length 
-    of time series as the size of the network is increased.
-
-    Parameters
-    ----------
-    rs : int
-        Int for the seed of the random pseudo-generator.
-
-    Returns
-    -------
-    None.
-
-    '''
-    exp_name = 'gnet_deg_3_3_99_deg_1'#'growing_net_deg_3_3_99_0_001_N'
-    net_class = 'ring_graph'
-    size_endpoints = [10, 555, 55]
-    id_trial = None #np.array([0])
-    compare_setup_critical_n(exp_name, net_class, size_endpoints, id_trial, 
-                             random_seed = rs, save_full_info = False)
 
 def fig_1_plot(exps, net_info, titles, filename = None):
-    
+    '''
+    EBP vs BP comparison figure.
+
+    Parameters
+    ----------
+    exps : dict
+        Dictionary carrying the information about the experiments to be plotted.
+    net_info : dict
+        Network information.
+            'net_name': Filename of the network to be evaluated.
+            'net_class': Class of graph to be increased in order to perform the experiment.
+    titles : dict
+        Titles to be plotted.
+    filename : str, optional
+        Saving pdf filename. The default is None.
+
+    Returns
+    -------
+    None.
+
+    '''
     
     fig = plt.figure(figsize = (6, 6), dpi = 300)
         
@@ -1035,10 +980,214 @@ def fig_1_plot(exps, net_info, titles, filename = None):
         plt.savefig(filename+".pdf", format='pdf', bbox_inches='tight')
         
     return     
+#=============================================================================#
+#Scripts
+#=============================================================================#
+def ring_N_16(net_name = 'ring_graph_N=16', Nseeds = 10):
+    '''
+    Setting the experiment of increasing the length of time series.
+
+    Parameters
+    ----------
+    net_name : str, optional
+        Name of the network to be evaluated. The default is 'ring_graph_N=16'.
+    Nseeds : int, optional
+        Total number of seeds. The default is 10.
+
+    Returns
+    -------
+    exps_dictionary : dict
+        Experiment dictionary with information gathered from the hdf5 file.
+    title : TYPE
+        DESCRIPTION.
+
+    '''
+    lgths_endpoints = [[10, 201, 5]]
+    #exps_name = ["gnr_logistc_compar_deg_2", "gnr_logistc_compar_deg_3"]
+    #title = ['b) deg 2', 'c) deg 3']
+    exps_name = ["logistic_lgth_3_99_0_001_N"]
+    title = [r'b) Dependence on $n$']
+    exps_dictionary = dict()
+    
+    for id_exp in range(len(exps_name)):
+        exps_dictionary[id_exp] = dict()
+        lgth_endpoints = lgths_endpoints[id_exp]
+        exp_name = exps_name[id_exp]
+        out_results_direc = os.path.join(folder_name, net_name)
+        out_results_direc = os.path.join(out_results_direc, exp_name)
+        out_results_direc = os.path.join(out_results_direc, '')
+        
+        if os.path.isdir(out_results_direc) == False:
+            print("Failed to find the desired result folder !")
+        
+        for seed in range(1, Nseeds + 1):
+            exps_dictionary[id_exp][seed] = dict()
+         
+            filename = "lgth_endpoints_{}_{}_{}_seed_{}".format(lgth_endpoints[0], lgth_endpoints[1],
+                                                        lgth_endpoints[2], seed) 
+            
+            if os.path.isfile(out_results_direc+filename+".hdf5"):
+                out_results_hdf5 = h5dict.File(out_results_direc+filename+".hdf5", 'r')
+                exp_dictionary = out_results_hdf5.to_dict()  
+                out_results_hdf5.close()
+            
+            exps_dictionary[id_exp][seed] = exp_dictionary
+    
+    return exps_dictionary, title
+
+def ring_net_plot_script(Nseeds = 10):
+    exps_dictionary, title = ring_N_16(net_name = 'ring_graph_N=16', Nseeds = Nseeds)
+    plot_lgth_dependence('ring_graph_N=16', exps_dictionary, title, filename = None)
+
+def exp_setting_n_c(exps_name, sizes_endpoints, net_class = 'ring_graph', Nseeds = 10):
+    '''
+    Setting the experiment of determing the critical length of time series for
+    a successfull reconstruction.
+
+    Parameters
+    ----------
+    exps_name : list
+        Name of experiments to be read from the file.
+    sizes_endpoints : list
+        Endpoints of the arrays to determine the numpy arrays.
+    net_class : str, optional
+        Class of graph to be increased in order to perform the experiment. The default is 'ring_graph'.
+    Nseeds : int, optional
+        Total number of seeds. The default is 10.
+
+    Returns
+    -------
+    exps_dictionary : dict
+        Experiment dictionary with information gathered from the hdf5 file.
+
+    '''
+    exps_dictionary = dict()
+    
+    for id_exp in range(len(exps_name)):
+        exps_dictionary[id_exp] = dict()
+        size_endpoints = sizes_endpoints[id_exp]
+
+        exp_name = exps_name[id_exp]
+        out_results_direc = os.path.join(folder_name, net_class)
+        out_results_direc = os.path.join(out_results_direc, exp_name)
+        out_results_direc = os.path.join(out_results_direc, '')
+        
+        if os.path.isdir(out_results_direc ) == False:
+            print("Failed to find the desired result folder !")
+        
+        for seed in range(1, Nseeds + 1):    
+            exps_dictionary[id_exp][seed] = dict()
+            
+            filename = "size_endpoints_{}_{}_{}_seed_{}".format(size_endpoints[0], size_endpoints[1],
+                                                        size_endpoints[2], seed) 
+            
+            if os.path.isfile(out_results_direc+filename+".hdf5"):
+                try:
+                    out_results_hdf5 = h5dict.File(out_results_direc+filename+".hdf5", 'r')
+                    exp_dictionary = out_results_hdf5.to_dict()  
+                    out_results_hdf5.close()
+                    exps_dictionary[id_exp][seed] = exp_dictionary
+                except:
+                    print('Failed to open the desired file!')    
+                    #exp_dictionary = dict()
+                    del exps_dictionary[id_exp][seed]
+            else:
+                print('Failed to find the desired file!')
+                
+                print(out_results_direc+filename+".hdf5")
+
+    return exps_dictionary
+
+def ring_graph_lgth_script(rs):
+    '''
+    Script to generate an experiment of varying length of time series and
+    obtaining the network reconstruction.
+
+    Parameters
+    ----------
+    rs : int
+        Int for the seed of the random pseudo-generator.
+
+    Returns
+    -------
+    None.
+
+    '''
+    exp_name = 'logistic_lgth_3_99_0_001_N'
+    net_name = 'ring_graph_N=16'
+    lgth_endpoints = [10, 201, 5]
+    compare_setup(exp_name, net_name, lgth_endpoints, random_seed = rs, 
+                      save_full_info = False)
+
+def n_c_plot_script(Nseeds = 10):
+    '''
+    Script to plot an experiment of determining the critical length 
+    of time series as the size of the network is increased.
+
+    Parameters
+    ----------
+    Nseeds : int, optional
+        Total number of seeds of the random pseudo-generator. The default is 10.
+
+    Returns
+    -------
+    exps_dictionary : dict
+        Experiment dictionary with information gathered from the hdf5 file.
+
+    '''
+    title = [r'b) deg 3']
+    exps_name = ['gnet_deg_3_3_99_deg_1']#['growing_net_deg_3_3_99_0_001_N']
+    size_endpoints = [[10, 555, 55]]#[[3, 51, 5]]
+    exps_dictionary, title = exp_setting_n_c(exps_name, size_endpoints, 
+                                             net_class = 'ring_graph',
+                                             Nseeds = Nseeds)
+    
+    plot_n_c_size(exps_dictionary, title, filename = None)
+    return exps_dictionary
+    
+def ring_graph_script(rs):
+    '''
+    Script to generate an experiment of determining the critical length 
+    of time series as the size of the network is increased.
+
+    Parameters
+    ----------
+    rs : int
+        Int for the seed of the random pseudo-generator.
+
+    Returns
+    -------
+    None.
+
+    '''
+    exp_name = 'gnet_deg_3_3_99_deg_1'#'growing_net_deg_3_3_99_0_001_N'
+    net_class = 'ring_graph'
+    size_endpoints = [10, 555, 55]
+    id_trial = None #np.array([0])
+    compare_setup_critical_n(exp_name, net_class, size_endpoints, id_trial, 
+                             random_seed = rs, save_full_info = False)
+
+
   
 
 def fig_1_setup(Nseeds = 10, filename = None):
-    
+    '''
+    To plot the comparison of EBP and BP in a ring net. This stands for the
+    Figure 1 of the article.
+
+    Parameters
+    ----------
+    Nseeds : int, optional
+        Number of seeds in the experiment. The default is 10.
+    filename : str, optional
+        Saving pdf filename. The default is None.
+
+    Returns
+    -------
+    exps : dict
+        Dictionary carrying the information about the experiments to be plotted.
+
+    '''
     net_info = dict()
     net_info['net_name'] = 'ring_graph_N=16'
     net_info['net_class'] = 'ring_graph'
@@ -1054,12 +1203,23 @@ def fig_1_setup(Nseeds = 10, filename = None):
     exps['n_c'], titles['n_c'] = exp_setting_n_c(exps_name, size_endpoints, 
                                              net_class = net_info['net_class'],
                                              Nseeds = Nseeds)
+    
     titles['n_c'] = [ r'c) $h(x, y) = x y$', r'd) $h(x, y) = y^2$']
 
     fig_1_plot(exps, net_info, titles, filename = filename)
    
     return exps
-       
+
+
+def test_rgraph(rs):
+    exp_name = 'test_rgraph'
+    net_name = 'ring_graph_N=16'
+    lgth_endpoints = [90, 91, 5]
+    exp_dictionary = compare_setup(exp_name, net_name, lgth_endpoints, random_seed = rs, 
+                      save_full_info = True)
+
+    return exp_dictionary
+
 def test_script(rs):
     exp_name = 'test_ring_2'
     net_class = 'ring_graph'
