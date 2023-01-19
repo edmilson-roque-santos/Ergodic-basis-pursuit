@@ -184,7 +184,8 @@ def B_eps_algorithm(B, PHI_incluster, params,
                     relaxing_path = default_args_alg['search_array'],
                     select_criterion = 'crit_3',
                     solver_default = cp.ECOS, 
-                    model_selection_dict = MS_dict_default):   
+                    model_selection_dict = MS_dict_default,
+                    complete_matrix = False):   
     '''
     B_eps relaxing algorithm solves the intra-connections for a given cluster 
     of nodes listed in params['cluster_list']
@@ -218,6 +219,7 @@ def B_eps_algorithm(B, PHI_incluster, params,
         Solver to be used in the convex minimization problem
     model_selection_dict:
         Model selection dictionary
+    complete_matrix :
     Returns
     -------
     b_eps_alg : TYPE
@@ -325,8 +327,6 @@ def B_eps_algorithm(B, PHI_incluster, params,
         #Flag to stop MS step if MS is satisfied once.
         MS_flag = True
         for epsilon in noise_vector:
-            #From Candes: the irrelevant entries are less than \epsilon/sqrt(N)
-            threshold_noise = epsilon/np.sqrt(L)
             params_node['noise_magnitude'] = epsilon
 
             try:
@@ -338,7 +338,12 @@ def B_eps_algorithm(B, PHI_incluster, params,
                 x_eps = np.zeros(min_l2_sol.shape[0])
                 if not VERBOSE:
                     print('Solver failed: node = ', id_node)
-                
+            
+            #From Candes: the irrelevant entries are less than \epsilon/sqrt(N)
+            threshold_noise = epsilon/np.sqrt(L)
+            
+            x_eps[np.absolute(x_eps) < threshold] = 0
+            
             if select_criterion == 'crit_3':
                 params_node['x_eps_path'][:, eps_counter] = x_eps
                 params_node['eps_counter'] = eps_counter
@@ -360,7 +365,10 @@ def B_eps_algorithm(B, PHI_incluster, params,
                 x_eps_dict[id_node]['x_eps_path'][:, eps_counter] = x_eps_can
                 
             if MS and not isinstance(num_nonzeros_vec, str) and MS_flag:
-                x_eps_matrix = completing_coeff_matrix(id_node, x_eps_can, x_eps_matrix, params_node, params)
+                if complete_matrix:
+                    x_eps_matrix = completing_coeff_matrix(id_node, x_eps_can, x_eps_matrix, params_node, params)
+                else:
+                    x_eps_matrix[params_node['indices_cluster'], id_node] = x_eps_can
                 c_matrix = x_eps_matrix[params_node['indices_cluster'], :]
                 adj_matrix = net_dyn.get_adj_from_coeff_matrix(c_matrix[:, params_node['cluster_list']], 
                                                                params_node, threshold_noise, True)

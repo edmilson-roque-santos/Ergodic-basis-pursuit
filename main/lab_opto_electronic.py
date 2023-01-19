@@ -15,6 +15,9 @@ from scipy import stats
 
 import h5dict
 
+from EBP.base_polynomial import triage as trg
+from EBP.base_polynomial import poly_library as polb
+
 from EBP import tools, net_dyn
 from EBP.modules.opto_electronic import opto_electronic as opt_elec
 
@@ -23,6 +26,100 @@ colors = ['darkgrey', 'orange', 'darkviolet', 'darkslategrey', 'silver']
 #silver - match
 #orange - false positive
 #darkviolet - false negative
+folder = "data"+"/"+"opto_electronic_data"+"/"+"symmetric_data"+"/"
+
+def generate_orthonorm_funct(exp_name = 'gen_orthf_cluster', 
+                             max_deg_monomials = 2,
+                             lgth_time_series = None,
+                             use_single = False,
+                             use_crossed_terms = False):
+    """
+    Routine to calculate for each coupling strength the orthonormal functions 
+    relative to the data which lies in the subset of the phase space.
+    
+    """
+    
+    ############# Construct the parameters dictionary ##############
+    parameters = dict()
+    
+    parameters['exp_name'] = exp_name
+    parameters['Nseeds'] = 1
+    
+    parameters['network_name'] = "opto_electronic"
+    parameters['max_deg_monomials'] = max_deg_monomials
+    parameters['expansion_crossed_terms'] = use_crossed_terms
+    parameters['single_density'] = use_single 
+    
+    parameters['use_kernel'] = True
+    parameters['normalize_coupling_function'] = False
+    parameters['use_orthonormal'] = True
+    parameters['use_canonical'] = False
+   
+    parameters['cluster_list'] = [np.arange(0, 5, 1, dtype = int), 
+                                  np.arange(5, 17, 1, dtype = int)]
+    
+    coupling_vec = np.arange(0.0156250, 1.093750 + 0.015625, 0.0156250)
+    
+    
+    ##### Identification for output
+    outfilename = os.path.join(folder, 'subset_data')
+    outfile_functions = os.path.join(outfilename, exp_name)
+    outfilename = os.path.join(outfilename, "")
+    
+    if os.path.isdir(outfile_functions) == False:
+        os.makedirs(outfile_functions)
+    outfile_functions = os.path.join(outfile_functions, "")
+    
+    hdf5 = h5dict.File(outfilename+"subset_3_4_4_5"+".hdf5", 'r')    
+    
+    for id_sig in range(10, 11):
+        
+        X_time_series = hdf5[coupling_vec[id_sig]]
+        
+        X_time_series = X_time_series[:lgth_time_series, :]
+        
+        
+        parameters['lower_bound'] = np.min(X_time_series)
+        parameters['upper_bound'] = np.max(X_time_series)
+        
+        parameters['number_of_vertices'] = X_time_series.shape[1]
+        parameters['length_of_time_series'] = X_time_series.shape[0] - 1
+        
+        parameters['X_time_series_data'] = X_time_series
+        
+        parameters['coupling'] = coupling_vec[id_sig]
+        parameters['threshold_connect'] = parameters['coupling']/10 
+        
+        for seed in range(1, parameters['Nseeds'] + 1):
+            #Extract the time series for the state and map
+            X_t = X_time_series[:-1, :]
+            params = parameters.copy()
+            
+            params['random_seed'] = seed
+            
+            if params['use_orthonormal']:
+                if lgth_time_series == None:
+                    params['orthnorm_func_filename'] = outfile_functions+\
+                    "orthnorm_sig_{:.6f}_deg_{}".format(coupling_vec[id_sig], 
+                                                        params['max_deg_monomials'])
+                else:
+                    params['orthnorm_func_filename'] = outfile_functions+\
+                    "orthnorm_sig_{:.6f}_deg_{}_lgth_{}".format(coupling_vec[id_sig], 
+                                                                params['max_deg_monomials'],
+                                                                lgth_time_series)
+                    
+                #For the opto electronic data, we can not use build from reduced basis
+                #The trick to reduce the number of basis functions does not work.
+                params['build_from_reduced_basis'] = False
+                params['save_orthnormfunc'] = True
+                params = trg.triage_params(params)
+
+                if not use_single:
+                    params = opt_elec.params_cluster(parameters['cluster_list'], params)   
+            
+            PHI, params = polb.library_matrix(X_t, params)    
+            
+    hdf5.close()
 
 def plot_traj_density(X_time_series, parameters):
     
@@ -1314,7 +1411,6 @@ def plot_comparison_analysis(exp_dictionary):
 def fig_3_script(filename = None):
 
     ##### Identification for output
-    folder = "data"+"/"+"opto_electronic_data"+"/"+"symmetric_data"+"/"
     outfilename = os.path.join(folder, 'subset_data')
     outfilename = os.path.join(outfilename, "")
     hdf5 = h5dict.File(outfilename+"subset_3_4_4_5"+".hdf5", 'r')    

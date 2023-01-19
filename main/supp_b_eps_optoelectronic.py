@@ -17,7 +17,7 @@ from EBP.base_polynomial import greedy_algorithms as gnr_alg
 
 import lab_opto_electronic as lab_opto
 
-exp_name = "gnr_opto_crossed"
+exp_name = 'net_lib_opto' #"gnr_opto_crossed"
 
 ############# Construct the parameters dictionary ##############
 parameters = dict()
@@ -27,20 +27,19 @@ parameters['Nseeds'] = 1
 
 parameters['network_name'] = "opto_electronic"
 parameters['max_deg_monomials'] = 2
-use_crossed_terms = True
+use_crossed_terms = False
 parameters['expansion_crossed_terms'] = use_crossed_terms
 
 parameters['use_kernel'] = True
 parameters['noisy_measurement'] = True
 opt = True#False# 
 parameters['use_canonical'] = not opt
-parameters['normalize_cols'] = False
+parameters['normalize_cols'] = not opt
 parameters['use_orthonormal'] = opt
 
 coupling_vec = np.arange(0.0156250, 1.093750 + 0.015625, 0.0156250)
 
-
-lgth_time_series = None
+lgth_time_series = 264
 
 '''
 From numerical observation we noted the density function clustering only 
@@ -50,6 +49,7 @@ the next lines.
 if parameters['use_orthonormal']:
     if lgth_time_series == None:
         orthnorm_folder = 'gen_orthf_cluster'
+        orthnorm_folder = os.path.join(orthnorm_folder, exp_name)
         use_single = False
     else:    
         if (lgth_time_series > 125):
@@ -61,7 +61,7 @@ if parameters['use_orthonormal']:
 
             else:
                 orthnorm_folder = 'gen_orthf_cluster'
-            
+                orthnorm_folder = os.path.join(orthnorm_folder, exp_name)
         else:
             orthnorm_folder = 'gen_orthf_single'
             use_single = True
@@ -109,14 +109,12 @@ if params['use_orthonormal']:
                                                         lgth_time_series)
         
         if not os.path.isfile(output_orthnormfunc_filename):
-            print("Feature missing on the code.")
-            '''
-            prepro.generate_orthonorm_funct(exp_name = orthnorm_folder,
+            lab_opto.generate_orthonorm_funct(exp_name = orthnorm_folder,
                                             max_deg_monomials = params['max_deg_monomials'],
                                             lgth_time_series = lgth_time_series,
                                             use_single = use_single,
                                             use_crossed_terms = use_crossed_terms)
-            '''
+            
             params['orthnorm_func_filename'] = output_orthnormfunc_filename
         if os.path.isfile(output_orthnormfunc_filename):
             params['orthnorm_func_filename'] = output_orthnormfunc_filename
@@ -134,7 +132,7 @@ params_ = params.copy()
 threshold_connect = 1e-8
 tolerance = 1e-8
 fixed_search_set = True
-relaxing_path = np.linspace(0.15, 0.40, 25) 
+relaxing_path = np.linspace(0.15, 0.33, 25) 
 select_criterion = 'crit_3'
 solver_optimization = cp.ECOS
 
