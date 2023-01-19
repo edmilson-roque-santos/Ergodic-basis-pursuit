@@ -6,11 +6,14 @@ Created on Wed Oct  6 14:53:58 2021
 @author: Edmilson Roque dos Santos
 """
 
-import networkx as nx
-import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec    
+import networkx as nx
+import numpy as np
+import os
 from scipy import stats
+
+import h5dict
 
 from EBP import tools, net_dyn
 from EBP.modules.opto_electronic import opto_electronic as opt_elec
@@ -257,7 +260,7 @@ def plot_clusterize_density(ax, X_time_series, cluster_list):
     
     num_clusters = len(cluster_list)
     col_cluster = ['darkblue', 'brown']
-    legend_ = ['Nodes 1 to 5', 'Nodes 6 to 17']
+    legend_ = [r' $\rho^1$ : Nodes 1 to 5', r'$\rho^2$ : Nodes 6 to 17']
     nodelist = np.arange(0, N, dtype = int)
     
     for id_cluster in range(num_clusters):
@@ -369,41 +372,30 @@ def plot_subset_clustering(X_time_series, args):
 
     '''
    
-    fig_ = plt.figure(figsize=(10, 5), dpi = 300)
-    fig_.suptitle(r'hu3')
-    subfigs = fig_.subfigures(1, 2, width_ratios = [1, 1], 
-                              wspace = 0.01)
-
-    fig = subfigs[0]
-
-    gs = GridSpec(1, 1, figure=fig,left=0.01, right=0.85, top = 0.850, 
-                  bottom = 0.01)
+    fig = plt.figure(figsize=(11, 4), dpi = 300)
+    gs = GridSpec(1, 3, figure=fig, wspace = 0.25)
+    
+    ax = fig.add_subplot(gs[0])
+    ax_plot_true_net(ax, probed_node=6)
+    ax.set_title(r'a) Original network')
     
     args['plot_subset'] = False
     args['subset'] = [3.4, 4.5]
-    data = opt_elec.select_subset_phase_space(X_time_series, args['subset'][0],
-                                              args['subset'][1])
+    data = X_time_series
     
-   
-    ax_1 = fig.add_subplot(gs[0])
+    ax_1 = fig.add_subplot(gs[1])
     plot_return_map(ax_1, data, args)  
     ax_1.set_xlabel(r'$y(t)$')
-   
-    fig.suptitle(r'a) Return map', x = 0.41) 
-
+    ax_1.set_title(r'b) Return map')
     
-    fig1 = subfigs[1]
-
-    gs1 = GridSpec(1, 1, figure=fig1,left=0.05, right=0.90, top = 0.850, 
-                  bottom = 0.01)
     
-    ax_2 = fig1.add_subplot(gs1[0])
+    ax_2 = fig.add_subplot(gs[2])
     plot_clusterize_density(ax_2, data, args['clusters_list'])
-    ax_2.set_ylabel(r'$\hat{\nu}(y)$')
+    ax_2.set_ylabel(r'$\rho(y)$')
     ax_2.set_xlabel(r'$y$')
    
-    ax_2.legend(loc = 0)
-    fig1.suptitle(r'b) Clustering density functions', x = 0.48) 
+    ax_2.legend(loc = 0,fontsize = 12)
+    ax_2.set_title(r'c) Clustering density functions')
 
     if args['filename'] == None:
         plt.show()
@@ -1285,7 +1277,7 @@ def plot_false_proportion(ax, lgth_vector, f_comp_vec, std, plot_std = True,
         if plot_std:
             ax.fill_between(lgth_vector, f_comp_vec[id_exp, :] - std[id_exp, :],
                             f_comp_vec[id_exp, :] + std[id_exp, :], 
-                    color = colors[id_exp], alpha = 0.2)
+                    color = colors[id_exp], alpha = 0.4)
         
     if plot_legend:
         #ax.legend(bbox_to_anchor=(0,1.02,1,0.2), loc="lower left",
@@ -1319,7 +1311,29 @@ def plot_comparison_analysis(exp_dictionary):
     ax_1 = fig.add_subplot(gs[1, 0:])
     plot_interval_intersec(ax_1, lgth_vector, d_matrix)
     
+def fig_3_script(filename = None):
+
+    ##### Identification for output
+    folder = "data"+"/"+"opto_electronic_data"+"/"+"symmetric_data"+"/"
+    outfilename = os.path.join(folder, 'subset_data')
+    outfilename = os.path.join(outfilename, "")
+    hdf5 = h5dict.File(outfilename+"subset_3_4_4_5"+".hdf5", 'r')    
     
+    id_sig = 10
+    coupling_vec = np.arange(0.0156250, 1.093750 + 0.015625, 0.0156250)
+    X_time_series = hdf5[coupling_vec[id_sig]]
+    X_t = X_time_series[:None,:]
+    
+    hdf5.close()
+
+    args= dict()
+    args['plot_subset'] = False
+    args['subset'] = [3.4, 4.5]
+    
+    args['clusters_list'] = [np.arange(5), np.arange(5, 16)]
+    args['filename'] = filename
+    
+    plot_subset_clustering(X_t, args)
     
     
     

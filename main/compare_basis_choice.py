@@ -788,13 +788,8 @@ def plot_comparison_n_critical(ax, exp_dictionary, net_class, plot_legend):
     lab_opto.plot_false_proportion(ax, size_vector, avge_nc_comparison, 
                                    std_nc_comparison, True, plot_legend)
     
-    delta = 10
-    N_vector = np.arange(size_endpoints['0'] + delta, size_endpoints['1'] - 3 - delta, 0.1)
-    ax.plot(N_vector, 20*np.log(N_vector), 'k--', lw = 1)
     ax.set_xscale('log')
-    
-
-    ax.set_ylabel(r'$n_c$')
+    ax.set_ylabel(r'$n_0$')
     plt.setp(ax.get_xticklabels(), visible=True)
     
     #lab_opto.plot_false_proportion(ax[1], lgth_vector, FN_comparison, True)
@@ -963,11 +958,21 @@ def fig_1_plot(exps, net_info, titles, filename = None):
     n_cols = int(len(keys))
 
     plot_legend = True
+    delta = [10, 80]
+    slope = [20, 20]
     for id_col in range(n_cols):
         exp_dictionary = exps['n_c'][keys[id_col]]
+        size_endpoints = exp_dictionary[1]['size_endpoints']
+
         ax1 = fig.add_subplot(gs[id_col, 1])
         
         plot_comparison_n_critical(ax1, exp_dictionary, net_info['net_class'], plot_legend)
+        
+        
+        N_vector = np.arange(size_endpoints['0'] + delta[id_col], size_endpoints['1'] - delta[id_col], 0.1)
+        ax1.plot(N_vector, slope[id_col]*np.log(N_vector), 'k--', lw = 1)
+        
+        
         if plot_legend:
             plot_legend = False
         ax1.set_title(titles['n_c'][id_col])
@@ -1200,11 +1205,11 @@ def fig_1_setup(Nseeds = 10, filename = None):
     exps_name = ['growing_net_deg_3_3_99_0_001_N','gnet_deg_3_3_99_deg_1']
     size_endpoints = [[3, 51, 5], [10, 555, 55]]
     
-    exps['n_c'], titles['n_c'] = exp_setting_n_c(exps_name, size_endpoints, 
+    exps['n_c'] = exp_setting_n_c(exps_name, size_endpoints, 
                                              net_class = net_info['net_class'],
                                              Nseeds = Nseeds)
     
-    titles['n_c'] = [ r'c) $h(x, y) = x y$', r'd) $h(x, y) = y^2$']
+    titles['n_c'] = [ r'c) $h(x_i, x_j) = x_i x_j$', r'd) $h(x_i, x_j) = x_j^2$']
 
     fig_1_plot(exps, net_info, titles, filename = filename)
    
