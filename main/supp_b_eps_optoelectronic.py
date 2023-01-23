@@ -141,7 +141,7 @@ gr_alg = gnr_alg.GR_algorithm(X_t, params['cluster_list'], params_,
                  relaxing_path, select_criterion, solver_optimization)
 
 outfolder = 'Figures_supp'
-filename = None#outfolder+'/'+'Fig_1_v3_0_01'
+filename = None#outfolder+'/'+'Fig_1_v4_0_01'
 
 node = 6
 lab_opto.plot_B_eps(gr_alg, node, threshold_connect, filename = filename)

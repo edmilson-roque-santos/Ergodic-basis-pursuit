@@ -1078,7 +1078,7 @@ def ax_probed_node_links(ax, info_x_eps, node, x_eps, eps, threshold):
     
     nx.draw_networkx_edges(G, pos = pos, edgelist = intersection,
                            ax = ax,
-                           width = links['intersec_weights'],
+                           width = 5*links['intersec_weights'],
                            edge_color = colors[4], alpha = 1.0)
     
     nx.draw_networkx_nodes(G, pos = pos, 
@@ -1091,7 +1091,7 @@ def ax_probed_node_links(ax, info_x_eps, node, x_eps, eps, threshold):
     nx.draw_networkx_edges(G, pos = pos, edgelist = false_positives, 
                            edge_color = colors[1],
                            ax = ax,
-                           width = links['false_pos_weights'],
+                           width = 5*links['false_pos_weights'],
                            alpha = 1.0,
                            connectionstyle='arc3,rad=0.2')
     
@@ -1153,62 +1153,59 @@ def plot_B_eps(gr_alg, node, threshold, id_cluster = 0, filename = None):
     None.
 
     '''
-    fig_ = plt.figure(figsize=(15, 5), dpi = 300)
-    subfigs = fig_.subfigures(1, 3, width_ratios = [0.6, 1.2, 0.8], 
-                              wspace = 0.75)
+    fig_ = plt.figure(figsize=(9, 3), dpi = 300,constrained_layout=True)
+    subfigs = fig_.subfigures(1, 2, width_ratios = [1.3, 0.7], wspace = 0.15)
     
-    fig = subfigs[0]
-    gs = GridSpec(1, 1, figure=fig,left=0.01, right=1.0, top = 0.990, 
-                  bottom = 0.01)
+    #fig = subfigs[0]
+    #gs = GridSpec(1, 1, figure=fig,left=0.01, right=1.0, top = 0.990, 
+    #              bottom = 0.01)
     
-    ax1 = fig.add_subplot(gs[0])
-    ax_plot_true_net(ax1, probed_node=node)
-    fig.suptitle(r'a) Original Network') 
+    #ax1 = fig.add_subplot(gs[0])
+    #ax_plot_true_net(ax1, probed_node=node)
+    #fig.suptitle(r'a) Original Network') 
     
     #======================================================#
     #======================================================#
-    fig1 = subfigs[1]
+    fig1 = subfigs[0]
     
-    gs1 = GridSpec(1, 3, figure=fig1, 
-                   left=0.01, right=1.0, top = 0.80, bottom = 0.05)
-    
+    #gs1 = GridSpec(1, 3, figure=fig1)
+    ax3 = fig1.subplots(1, 3)
     info_dict = gr_alg['info_x_eps'][id_cluster]
 
-    ax3 = fig1.add_subplot(gs1[0])
+    #ax3 = fig1.add_subplot(gs1[0])
     x_eps = info_dict[node]['min_l2_sol']#[:, node]
     eps_min = info_dict[node]['noise_min']
     threshold_noise = eps_min/np.sqrt(gr_alg['PHI'].shape[1])
-    ax_probed_node_links(ax3, info_dict, node, x_eps, eps_min, threshold_noise)
+    ax_probed_node_links(ax3[0], info_dict, node, x_eps, eps_min, threshold_noise)
     
     
-    ax3 = fig1.add_subplot(gs1[1])
+    #ax3 = fig1.add_subplot(gs1[1])
     eps_counter = noise_min_loc(info_dict, node)
     x_eps = info_dict[node]['x_eps_path'][:, eps_counter]
     eps = info_dict['noise_vector'][eps_counter]
     threshold_noise = eps/np.sqrt(gr_alg['PHI'].shape[1])
-    ax_probed_node_links(ax3, info_dict, node,  x_eps, eps, threshold_noise)
+    ax_probed_node_links(ax3[1], info_dict, node,  x_eps, eps, threshold_noise)
     
-    ax4 = fig1.add_subplot(gs1[2])
+    #ax4 = fig1.add_subplot(gs1[2])
     eps_counter = info_dict[node]['eps_flag']['eps_counter']
     x_eps = info_dict[node]['x_eps_path'][:, eps_counter]
     eps = info_dict[node]['eps_flag']['eps']
     threshold_noise = eps/np.sqrt(gr_alg['PHI'].shape[1])
-    ax_probed_node_links(ax4, info_dict, node,  x_eps, eps, threshold_noise)
+    ax_probed_node_links(ax3[2], info_dict, node,  x_eps, eps, threshold_noise)
     
-    fig1.suptitle(r'b) $\mathcal{B}_{\varepsilon}$ relaxing path')
+    fig1.suptitle(r'a) $\mathcal{B}_{\varepsilon}$ relaxing path')
 
     #======================================================#
     #======================================================#
-    fig2 = subfigs[2]
-    gs2 = GridSpec(1, 1, figure=fig2,left=0.2, right=1.0, top = 0.850, 
-                  bottom = 0.05)
-    ax5 = fig2.add_subplot(gs2[0])
-    
-    fig2.suptitle(r'c) False links proportion', x=0.6)
-    
+    fig2 = subfigs[1]
+    #gs2 = GridSpec(1, 1, figure=fig2)
+    #ax5 = fig2.add_subplot(gs2[0])
+    ax5 = fig2.subplots(1, 1)
     ax_false_proportion(ax5, gr_alg['info_x_eps'][id_cluster])
     
+    fig2.suptitle(r'b) False links proportion', x = 0.55)
     if filename == None:
+        #plt.tight_layout()
         plt.show()
     else:
      
