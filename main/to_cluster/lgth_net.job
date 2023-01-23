@@ -1,15 +1,15 @@
-#PBS -N GR_MC
-#PBS -l select=1:ncpus=40
+#PBS -N lgth_MC
+#PBS -l select=1:ncpus=10
 #PBS -l walltime=336:00:00
 #PBS -m abe
 #PBS -M edmilson.roque.santos@usp.br
-#PBS -o /home/edroque/Greedy_Reconstruction/MC_EBP/output_lgth
-#PBS -e /home/edroque/Greedy_Reconstruction/MC_EBP/erros_lgth
+#PBS -o /home/edroque/Greedy_Reconstruction/MC_EBP/output_lgth.out
+#PBS -e /home/edroque/Greedy_Reconstruction/MC_EBP/erros_lgth.err
 
-mkdir -p /lustre/edroque/Greedy_Reconstruction/MC_EBP_lgth_vlf/
+mkdir -p /lustre/edroque/Greedy_Reconstruction/MC_EBP_lgth/
 
-cp -a /home/edroque/Greedy_Reconstruction/MC_EBP/. /lustre/edroque/Greedy_Reconstruction/MC_EBP_lgth_vlf
+cp -a /home/edroque/Greedy_Reconstruction/MC_EBP/. /lustre/edroque/Greedy_Reconstruction/MC_EBP_lgth
 
-cd /lustre/edroque/Greedy_Reconstruction/MC_EBP_lgth_vlf/
+cd /lustre/edroque/Greedy_Reconstruction/MC_EBP_lgth/
 
-python mp_lgth.py > saida
+python mp_lgth.py > saida_lgth.txt

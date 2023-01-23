@@ -1118,9 +1118,9 @@ def ring_graph_lgth_script(rs):
     None.
 
     '''
-    exp_name = 'logistic_lgth_3_99_0_001_N'
-    net_name = 'ring_graph_N=16'
-    lgth_endpoints = [10, 201, 5]
+    exp_name = 'logc_lgth_3_99_0_001'
+    net_name = 'ring_graph_N=40'
+    lgth_endpoints = [10, 510, 12]
     compare_setup(exp_name, net_name, lgth_endpoints, random_seed = rs, 
                       save_full_info = False)
 
