@@ -104,7 +104,7 @@ def compare_script(script_dict):
     parameters['random_seed'] = script_dict.get('random_seed', 1)
     parameters['network_name'] = script_dict['net_name']
     parameters['max_deg_monomials'] = 3
-    parameters['expansion_crossed_terms'] = False
+    parameters['expansion_crossed_terms'] = True#False
     
     parameters['use_kernel'] = True
     parameters['noisy_measurement'] = False
@@ -127,7 +127,7 @@ def compare_script(script_dict):
     
     r = 3.990
     net_dynamics_dict['f'] = lambda x: r*x*(1 - x)
-    net_dynamics_dict['h'] = lambda x: (A.T @ x**2)#(x**1)*(A.T @ x**1)
+    net_dynamics_dict['h'] = lambda x: (x**1)*(A.T @ x**1)#(A.T @ x**2)
     net_dynamics_dict['max_degree'] = np.max(np.sum(A, axis=0))
     net_dynamics_dict['coupling'] = parameters['coupling']#*net_dynamics_dict['max_degree']
     net_dynamics_dict['random_seed'] = parameters['random_seed']
@@ -788,7 +788,7 @@ def plot_comparison_n_critical(ax, exp_dictionary, net_class, plot_legend):
     lab_opto.plot_false_proportion(ax, size_vector, avge_nc_comparison, 
                                    std_nc_comparison, True, plot_legend)
     
-    ax.set_xscale('log')
+    
     ax.set_ylabel(r'$n_0$')
     plt.setp(ax.get_xticklabels(), visible=True)
     
@@ -938,17 +938,17 @@ def fig_1_plot(exps, net_info, titles, filename = None):
 
     '''
     
-    fig = plt.figure(figsize = (6, 6), dpi = 300)
+    fig = plt.figure(figsize = (8, 3), dpi = 300)
         
-    gs = GridSpec(nrows=2, ncols=2, figure=fig)
+    gs = GridSpec(nrows=1, ncols=3, figure=fig)
     
     #===========================================#
-    ax_0 = fig.add_subplot(gs[0, 0])
+    ax_0 = fig.add_subplot(gs[0])
     ax_plot_ring_graph(ax_0)
     ax_0.set_title(r'a) Original Network') 
     #===========================================#
     
-    ax_1 = fig.add_subplot(gs[1, 0])
+    ax_1 = fig.add_subplot(gs[1])
     plot_comparison_analysis(ax_1, exps['lgth'][0], net_info['net_name'], False)
     ax_1.set_title(titles['lgth'][0])
     
@@ -964,7 +964,7 @@ def fig_1_plot(exps, net_info, titles, filename = None):
         exp_dictionary = exps['n_c'][keys[id_col]]
         size_endpoints = exp_dictionary[1]['size_endpoints']
 
-        ax1 = fig.add_subplot(gs[id_col, 1])
+        ax1 = fig.add_subplot(gs[2 + id_col])
         
         plot_comparison_n_critical(ax1, exp_dictionary, net_info['net_class'], plot_legend)
         
@@ -1202,14 +1202,14 @@ def fig_1_setup(Nseeds = 10, filename = None):
     
     exps['lgth'], titles['lgth'] = ring_N_16(net_info['net_name'], Nseeds = Nseeds)
     
-    exps_name = ['growing_net_deg_3_3_99_0_001_N','gnet_deg_3_3_99_deg_1']
-    size_endpoints = [[3, 51, 5], [10, 555, 55]]
+    exps_name = ['growing_net_deg_3_3_99_0_001_N']#,'gnet_deg_3_3_99_deg_1']
+    size_endpoints = [[3, 51, 5]]#, [10, 555, 55]]
     
     exps['n_c'] = exp_setting_n_c(exps_name, size_endpoints, 
                                              net_class = net_info['net_class'],
                                              Nseeds = Nseeds)
     
-    titles['n_c'] = [ r'c) $h(x_i, x_j) = x_i x_j$', r'd) $h(x_i, x_j) = x_j^2$']
+    titles['n_c'] = [ r'c) $h(x_i, x_j) = x_i x_j$']#, r'd) $h(x_i, x_j) = x_j^2$']
 
     fig_1_plot(exps, net_info, titles, filename = filename)
    
