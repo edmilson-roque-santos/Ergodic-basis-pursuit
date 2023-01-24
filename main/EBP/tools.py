@@ -49,6 +49,21 @@ def star_graph(N, filename):
     G = nx.star_graph(N, create_using=nx.Graph())
     nx.write_edgelist(G, filename+".txt", data=False)
 
+def adjacent_edges(nodes, halfk): 
+    N = len(nodes) 
+    for i, u in enumerate(nodes): 
+        for j in range(i+1, i+halfk+1): 
+            v = nodes[j % N] 
+            yield u, v
+            
+def make_ring_lattice(N, filename, k = 3): 
+    G = nx.Graph() 
+    nodes = range(N) 
+    G.add_nodes_from(nodes) 
+    G.add_edges_from(adjacent_edges(nodes, k//2)) 
+    nx.write_edgelist(G, filename+".txt", data=False)
+    return G
+
 def random_toy_net_model(random_seed = 1, 
                     num_of_cluster = 5,
                     N_nodes_cluster = 10,

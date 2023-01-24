@@ -104,7 +104,7 @@ def compare_script(script_dict):
     parameters['random_seed'] = script_dict.get('random_seed', 1)
     parameters['network_name'] = script_dict['net_name']
     parameters['max_deg_monomials'] = 3
-    parameters['expansion_crossed_terms'] = True#False
+    parameters['expansion_crossed_terms'] = False#True#
     
     parameters['use_kernel'] = True
     parameters['noisy_measurement'] = False
@@ -127,7 +127,7 @@ def compare_script(script_dict):
     
     r = 3.990
     net_dynamics_dict['f'] = lambda x: r*x*(1 - x)
-    net_dynamics_dict['h'] = lambda x: (x**1)*(A.T @ x**1)#(A.T @ x**2)
+    net_dynamics_dict['h'] = lambda x: (A.T @ x**2)#(x**1)*(A.T @ x**1)
     net_dynamics_dict['max_degree'] = np.max(np.sum(A, axis=0))
     net_dynamics_dict['coupling'] = parameters['coupling']#*net_dynamics_dict['max_degree']
     net_dynamics_dict['random_seed'] = parameters['random_seed']
@@ -348,7 +348,7 @@ def quick_comparison(net_dict, net_name):
     
     return FP, FN        
     
-def determine_critical_n(exp_param, size, exp_name, net_class, id_trial = None, 
+def determine_critical_n(exp_param, size, exp_name, net_info, id_trial = None, 
                          random_seed = 1):
     '''
     Determine the minimum length of time series for a successfull reconstruction.
@@ -374,11 +374,11 @@ def determine_critical_n(exp_param, size, exp_name, net_class, id_trial = None,
         minimum length of time series.
 
     '''
-    net_name = net_class+"_{}".format(size)
+    net_name = net_info['net_class']+"_{}".format(size)
     
     if not os.path.isfile('network_structure/'+net_name):
         try:
-            tools.ring_graph(size, 'network_structure/'+net_name)
+            net_info['gen'](size, 'network_structure/'+net_name)
         except:
             print("There is already a net!")
             
@@ -410,7 +410,7 @@ def determine_critical_n(exp_param, size, exp_name, net_class, id_trial = None,
     n_critical = lgth_time_series
     return n_critical
 
-def compare_setup_critical_n(exp_name, net_class, size_endpoints, id_trial,
+def compare_setup_critical_n(exp_name, net_info, size_endpoints, id_trial,
                              random_seed = 1, save_full_info = False):
     '''
     Comparison script to growing the net size and evaluate the critical length of 
@@ -447,7 +447,7 @@ def compare_setup_critical_n(exp_name, net_class, size_endpoints, id_trial,
                                           size_endpoints[2], dtype = int)
     
     #Filename for output results
-    out_results_direc = out_dir(net_class, exp_name)
+    out_results_direc = out_dir(net_info['net_class'], exp_name)
         
     filename = "size_endpoints_{}_{}_{}_seed_{}".format(size_endpoints[0], 
                                                         size_endpoints[1],
@@ -472,7 +472,7 @@ def compare_setup_critical_n(exp_name, net_class, size_endpoints, id_trial,
                 print('exp:', key, 'N = ', size)
                 
                 n_critical = determine_critical_n(exp_params[key], size, exp_name, 
-                                                  net_class, id_trial, random_seed)
+                                                  net_info, id_trial, random_seed)
                 
                 out_results_hdf5[key][size] = dict()
                 out_results_hdf5[key][size]['n_critical'] = n_critical
@@ -542,8 +542,8 @@ def compare_basis(exp_dictionary, net_name):
     exp_vec = list(exp_dictionary['exp_params'].keys())
     lgth_endpoints = exp_dictionary['lgth_endpoints']
     
-    lgth_vector = np.arange(lgth_endpoints['0'], lgth_endpoints['1'],
-                                      lgth_endpoints['2'], dtype = int)
+    lgth_vector = np.arange(lgth_endpoints[0], lgth_endpoints[1],
+                                      lgth_endpoints[2], dtype = int)
     
     FP_comparison = np.zeros((len(exp_vec), lgth_vector.shape[0]))
     FN_comparison = np.zeros((len(exp_vec), lgth_vector.shape[0]))
@@ -551,7 +551,7 @@ def compare_basis(exp_dictionary, net_name):
     for id_exp in range(len(exp_vec)):
         for id_key in range(len(lgth_vector)):
             key = lgth_vector[id_key]
-            A_est = exp_dictionary[exp_vec[id_exp]]['{}'.format(key)]['A']
+            A_est = exp_dictionary[exp_vec[id_exp]][key]['A']
             
             G_est = nx.from_numpy_array(A_est, create_using = nx.Graph)
             links = lab_opto.links_types(G_est, G_true)        
@@ -565,7 +565,7 @@ def compare_basis(exp_dictionary, net_name):
             
     return lgth_vector, FP_comparison, FN_comparison
 
-def compare_basis_net_size(exp_dictionary, net_class):
+def compare_basis_net_size(exp_dictionary):
     '''
     Given a experiment dict, it calculates the performance of the reconstruction.
 
@@ -573,9 +573,7 @@ def compare_basis_net_size(exp_dictionary, net_class):
     ----------
     exp_dictionary : dict
         Output results dictionary.
-    net_class : str
-        Filename.
-
+    
     Returns
     -------
     size_vector : numpy array 
@@ -587,15 +585,15 @@ def compare_basis_net_size(exp_dictionary, net_class):
     exp_vec = list(exp_dictionary['exp_params'].keys())
     size_endpoints = exp_dictionary['size_endpoints']
     
-    size_vector = np.arange(size_endpoints['0'], size_endpoints['1'],
-                                      size_endpoints['2'], dtype = int)
+    size_vector = np.arange(size_endpoints[0], size_endpoints[1],
+                                      size_endpoints[2], dtype = int)
     
     n_critical_comparison = np.zeros((len(exp_vec), size_vector.shape[0]))
     
     for id_exp in range(len(exp_vec)):
         for id_key in range(len(size_vector)):
             key = size_vector[id_key]
-            n_critical = exp_dictionary[exp_vec[id_exp]]['{}'.format(key)]['n_critical']
+            n_critical = exp_dictionary[exp_vec[id_exp]][key]['n_critical']
             n_critical_comparison[id_exp, id_key] = n_critical
             
             
@@ -691,6 +689,7 @@ def ax_plot_ring_graph(ax, plot_net_alone=False):
                            ax = ax,
                            edgelist = list(G_true.edges()), 
                            edge_color = colors[4],
+                           arrows = True,
                            arrowsize = 7,
                            width = 0.65,
                            alpha = 1.0)
@@ -723,8 +722,8 @@ def plot_comparison_analysis(ax, exp_dictionary, net_name, plot_legend):
     Nseeds = int(len(seeds))
     
     lgth_endpoints = exp_dictionary[seeds[0]]['lgth_endpoints']
-    lgth_vector = np.arange(lgth_endpoints['0'], lgth_endpoints['1'],
-                                      lgth_endpoints['2'], dtype = int)
+    lgth_vector = np.arange(lgth_endpoints[0], lgth_endpoints[1],
+                                      lgth_endpoints[2], dtype = int)
     
     FP_comparison, FN_comparison = np.zeros((Nseeds, 2, lgth_vector.shape[0])), np.zeros((Nseeds, 2, lgth_vector.shape[0]))
     
@@ -748,7 +747,7 @@ def plot_comparison_analysis(ax, exp_dictionary, net_name, plot_legend):
     '''
     ax.set_xlabel(r'$n$')
     
-def plot_comparison_n_critical(ax, exp_dictionary, net_class, plot_legend):    
+def plot_comparison_n_critical(ax, exp_dictionary, plot_legend):    
     '''
     To plot the comparison between EBP and BP in the experiment: n_c vs N
 
@@ -758,8 +757,6 @@ def plot_comparison_n_critical(ax, exp_dictionary, net_class, plot_legend):
         Draw the graph in the specified Matplotlib axes.
     exp_dictionary : dict
         Dictionary carrying the information about the experiments to be plotted.
-    net_class : str
-        Class of graph to be increased in order to perform the experiment.
     plot_legend : boolean
         To plot the legend inside the ax panel.
 
@@ -772,15 +769,14 @@ def plot_comparison_n_critical(ax, exp_dictionary, net_class, plot_legend):
     Nseeds = int(len(seeds))
     
     size_endpoints = exp_dictionary[seeds[0]]['size_endpoints']
-    size_vector = np.arange(size_endpoints['0'], size_endpoints['1'],
-                                      size_endpoints['2'], dtype = int)
+    size_vector = np.arange(size_endpoints[0], size_endpoints[1],
+                                      size_endpoints[2], dtype = int)
     
     n_c_comparison = np.zeros((Nseeds, 2, size_vector.shape[0]))
     
     
     for id_seed in range(Nseeds):
-        size_vector, n_c_comparison[id_seed, :, :] = compare_basis_net_size(exp_dictionary[seeds[id_seed]], 
-                                                                        net_class)
+        size_vector, n_c_comparison[id_seed, :, :] = compare_basis_net_size(exp_dictionary[seeds[id_seed]])
     
     avge_nc_comparison = n_c_comparison.mean(axis = 0)    
     std_nc_comparison = n_c_comparison.std(axis = 0)     
@@ -875,7 +871,8 @@ def plot_n_c_size(exps_dictionary, title, filename = None):
     None.
 
     '''
-    net_class = 'ring_graph'
+    net_info = dict()
+    net_info['net_class'] = 'ring_graph'
     
     keys = list(exps_dictionary.keys())
     n_cols = int(len(keys))
@@ -901,7 +898,7 @@ def plot_n_c_size(exps_dictionary, title, filename = None):
         ax1 = fig1.add_subplot(gs1[0])
         #ax2 = fig1.add_subplot(gs1[1])
         
-        plot_comparison_n_critical(ax1, exp_dictionary, net_class, plot_legend)
+        plot_comparison_n_critical(ax1, exp_dictionary, net_info, plot_legend)
         if plot_legend:
             plot_legend = False
         fig1.suptitle(title[id_col])
@@ -940,7 +937,7 @@ def fig_1_plot(exps, net_info, titles, filename = None):
     
     fig = plt.figure(figsize = (8, 3), dpi = 300)
         
-    gs = GridSpec(nrows=1, ncols=3, figure=fig)
+    gs = GridSpec(nrows=1, ncols=3, figure=fig, width_ratios=(0.8, 1.2, 0.8))
     
     #===========================================#
     ax_0 = fig.add_subplot(gs[0])
@@ -966,10 +963,10 @@ def fig_1_plot(exps, net_info, titles, filename = None):
 
         ax1 = fig.add_subplot(gs[2 + id_col])
         
-        plot_comparison_n_critical(ax1, exp_dictionary, net_info['net_class'], plot_legend)
+        plot_comparison_n_critical(ax1, exp_dictionary, plot_legend)
         
         
-        N_vector = np.arange(size_endpoints['0'] + delta[id_col], size_endpoints['1'] - delta[id_col], 0.1)
+        N_vector = np.arange(size_endpoints[0] + delta[id_col], size_endpoints[1] - delta[id_col], 0.1)
         ax1.plot(N_vector, slope[id_col]*np.log(N_vector), 'k--', lw = 1)
         
         
@@ -1007,10 +1004,10 @@ def ring_N_16(net_name = 'ring_graph_N=16', Nseeds = 10):
         DESCRIPTION.
 
     '''
-    lgths_endpoints = [[10, 201, 5]]
+    lgths_endpoints = [[10, 510, 12]]
     #exps_name = ["gnr_logistc_compar_deg_2", "gnr_logistc_compar_deg_3"]
     #title = ['b) deg 2', 'c) deg 3']
-    exps_name = ["logistic_lgth_3_99_0_001_N"]
+    exps_name = ["logc_lgth_3_99_0_001"]
     title = [r'b) Dependence on $n$']
     exps_dictionary = dict()
     
@@ -1165,11 +1162,14 @@ def ring_graph_script(rs):
     None.
 
     '''
-    exp_name = 'gnet_deg_3_3_99_deg_1'#'growing_net_deg_3_3_99_0_001_N'
-    net_class = 'ring_graph'
+    exp_name = 'gnet_deg_3_3_99'#'growing_net_deg_3_3_99_0_001_N'
+    
+    net_info = dict()
+    net_info['net_class'] = 'star_graph'
+    net_info['gen'] = tools.star_graph
     size_endpoints = [10, 555, 55]
     id_trial = None #np.array([0])
-    compare_setup_critical_n(exp_name, net_class, size_endpoints, id_trial, 
+    compare_setup_critical_n(exp_name, net_info, size_endpoints, id_trial, 
                              random_seed = rs, save_full_info = False)
 
 
@@ -1194,7 +1194,7 @@ def fig_1_setup(Nseeds = 10, filename = None):
 
     '''
     net_info = dict()
-    net_info['net_name'] = 'ring_graph_N=16'
+    net_info['net_name'] = 'ring_graph_N=40'
     net_info['net_class'] = 'ring_graph'
     
     exps = dict()
@@ -1230,7 +1230,7 @@ def test_script(rs):
     net_class = 'ring_graph'
     size_endpoints = [10, 1001, 100]
     id_trial = None #np.array([0])
-    exp_dictionary = compare_setup_critical_n(exp_name, net_class, size_endpoints, 
+    exp_dictionary = compare_setup_critical_n(exp_name, net_info, size_endpoints, 
                              id_trial, random_seed = rs, 
                              save_full_info = False)    
     return exp_dictionary

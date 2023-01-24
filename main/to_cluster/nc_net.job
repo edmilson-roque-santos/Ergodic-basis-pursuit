@@ -6,10 +6,10 @@
 #PBS -o /home/edroque/Greedy_Reconstruction/MC_EBP/output_nc.out
 #PBS -e /home/edroque/Greedy_Reconstruction/MC_EBP/erros_nc.err
 
-mkdir -p /lustre/edroque/Greedy_Reconstruction/MC_EBP_nc_vlf/
+mkdir -p /lustre/edroque/Greedy_Reconstruction/MC_EBP_nc/
 
-cp -a /home/edroque/Greedy_Reconstruction/MC_EBP/. /lustre/edroque/Greedy_Reconstruction/MC_EBP_nc_vlf
+cp -a /home/edroque/Greedy_Reconstruction/MC_EBP/. /lustre/edroque/Greedy_Reconstruction/MC_EBP_nc
 
-cd /lustre/edroque/Greedy_Reconstruction/MC_EBP_nc_vlf/
+cd /lustre/edroque/Greedy_Reconstruction/MC_EBP_nc/
 
 python mp_nc.py > saida_nc.txt
