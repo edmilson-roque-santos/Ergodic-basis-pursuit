@@ -53,14 +53,14 @@ def adjacent_edges(nodes, halfk):
     N = len(nodes) 
     for i, u in enumerate(nodes): 
         for j in range(i+1, i+halfk+1): 
-            v = nodes[j % N] 
+            v = nodes[j % N]
             yield u, v
             
 def make_ring_lattice(N, filename, k = 3): 
     G = nx.Graph() 
     nodes = range(N) 
     G.add_nodes_from(nodes) 
-    G.add_edges_from(adjacent_edges(nodes, k//2)) 
+    G.add_edges_from(adjacent_edges(nodes, k)) 
     nx.write_edgelist(G, filename+".txt", data=False)
     return G
 
