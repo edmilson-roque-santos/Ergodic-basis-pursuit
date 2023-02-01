@@ -898,7 +898,7 @@ def plot_n_c_size(exps_dictionary, title, filename = None):
         ax1 = fig1.add_subplot(gs1[0])
         #ax2 = fig1.add_subplot(gs1[1])
         
-        plot_comparison_n_critical(ax1, exp_dictionary, net_info, plot_legend)
+        plot_comparison_n_critical(ax1, exp_dictionary, plot_legend)
         if plot_legend:
             plot_legend = False
         fig1.suptitle(title[id_col])
@@ -1138,9 +1138,9 @@ def n_c_plot_script(Nseeds = 10):
 
     '''
     title = [r'b) deg 3']
-    exps_name = ['gnet_deg_3_3_99_deg_1']#['growing_net_deg_3_3_99_0_001_N']
+    exps_name = ['gnet_deg_3_3_99_deg_1']#['lattice_neighs_3_deg_3_x_2']#['growing_net_deg_3_3_99_0_001_N']
     size_endpoints = [[10, 555, 55]]#[[3, 51, 5]]
-    exps_dictionary, title = exp_setting_n_c(exps_name, size_endpoints, 
+    exps_dictionary = exp_setting_n_c(exps_name, size_endpoints, 
                                              net_class = 'ring_graph',
                                              Nseeds = Nseeds)
     
@@ -1162,11 +1162,11 @@ def ring_graph_script(rs):
     None.
 
     '''
-    exp_name = 'gnet_deg_3_3_99'#'growing_net_deg_3_3_99_0_001_N'
+    exp_name = 'lattice_neighs_3_deg_3_x_2'
     
     net_info = dict()
-    net_info['net_class'] = 'star_graph'
-    net_info['gen'] = tools.star_graph
+    net_info['net_class'] = 'lattice_neighs_3'
+    net_info['gen'] = tools.make_ring_lattice
     size_endpoints = [10, 555, 55]
     id_trial = None #np.array([0])
     compare_setup_critical_n(exp_name, net_info, size_endpoints, id_trial, 
