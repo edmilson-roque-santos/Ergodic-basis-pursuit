@@ -575,8 +575,8 @@ def weights_from_edges(G, edgeslist):
     else:
         return []
 
-def pos_optoelectronic(cluster_draw = [np.arange(0, 11, 1, dtype=int), 
-                                       np.arange(11, 17, 1,dtype = int)]):
+def pos_optoelectronic(cluster_draw = [np.arange(0, 5, 1, dtype=int), 
+                                       np.arange(5, 17, 1,dtype = int)]):
     '''
     Position nodes using clustering information in cluster_draw. Each cluster
     is plotted in circular template using nx.circular_layout
@@ -601,7 +601,7 @@ def pos_optoelectronic(cluster_draw = [np.arange(0, 11, 1, dtype=int),
                             center = np.array([10*id_cluster, 10*id_cluster]))
         
         for id_node in cluster_draw[id_cluster]:
-            pos_true[id_node] = pos[id_node - id_cluster*(11)]
+            pos_true[id_node] = pos[id_node - id_cluster*(5)]
     
     return pos_true
 
@@ -807,27 +807,34 @@ def ax_plot_true_net(ax, probed_node = 0, print_probed = True, plot_net_alone = 
     None.
 
     '''
+    
+    col_nodes = np.array(['darkblue']*5)
+    col_nodes = np.append(col_nodes, ['brown']*12)
+    
     A_true, G_true = opt_elec.get_Adj_matrix()
     pos_true = pos_optoelectronic()
 
-    nx.draw_networkx_nodes(G_true, pos = pos_true, 
-                           ax = ax, node_color = colors[3], 
-                           linewidths= 1.0,
-                           node_size = 250,
-                           alpha = 1.0)
-    nx.draw_networkx_nodes(G_true, pos = pos_true, 
-                           node_color = colors[0], 
-                           node_size = 200,
-                           ax = ax,
-                           alpha = 1.0)
-    
     if print_probed:
         nx.draw_networkx_nodes(G_true, pos = pos_true, 
                                ax = ax,
                                nodelist=[probed_node],
                                node_color = colors[3], 
-                               node_size = 200,
+                               linewidths= 3.0,
+                               node_size = 250,
                                alpha = 1.0)
+
+    nx.draw_networkx_nodes(G_true, pos = pos_true, 
+                           ax = ax, node_color = 'white', 
+                           linewidths= 0.8,
+                           node_size = 200,
+                           alpha = 0.8)
+    nx.draw_networkx_nodes(G_true, pos = pos_true, 
+                           node_color = col_nodes,#colors[0], 
+                           node_size = 150,
+                           ax = ax,
+                           alpha = 0.8)
+    
+    
         
     nx.draw_networkx_edges(G_true, pos = pos_true, 
                            ax = ax,

@@ -113,9 +113,12 @@ def compare_script(script_dict):
     parameters['use_orthonormal'] = script_dict['opt_list'][2]
     parameters['length_of_time_series'] = script_dict['lgth_time_series']
     
-    G = nx.read_edgelist("network_structure/{}.txt".format(parameters['network_name']),
-                        nodetype = int, create_using = nx.Graph)
-    
+    try:
+        G = script_dict['G']
+    except:
+        G = nx.read_edgelist("network_structure/{}.txt".format(parameters['network_name']),
+                            nodetype = int, create_using = nx.Graph)
+        
     parameters['number_of_vertices'] = len(nx.nodes(G))
     A = nx.to_numpy_array(G, nodelist = list(range(parameters['number_of_vertices'])))
     A = np.asarray(A)
@@ -378,7 +381,7 @@ def determine_critical_n(exp_param, size, exp_name, net_info, id_trial = None,
     
     if not os.path.isfile('network_structure/'+net_name):
         try:
-            net_info['gen'](size, 'network_structure/'+net_name)
+            true_graph = net_info['gen'](size, 'network_structure/'+net_name)
         except:
             print("There is already a net!")
             
@@ -398,6 +401,7 @@ def determine_critical_n(exp_param, size, exp_name, net_info, id_trial = None,
         script_dict['net_name'] = net_name
         script_dict['id_trial'] = id_trial
         script_dict['random_seed'] = random_seed
+        script_dict['G'] = true_graph
         
         net_dict = compare_script(script_dict)
         FP, FN = quick_comparison(net_dict, net_name)
@@ -627,11 +631,11 @@ def ax_plot_true_net(ax, G_true, pos_true, probed_node = 0,
     nx.draw_networkx_nodes(G_true, pos = pos_true, 
                            ax = ax, node_color = colors[3], 
                            linewidths= 1.0,
-                           node_size = 250,
+                           node_size = 150,
                            alpha = 1.0)
     nx.draw_networkx_nodes(G_true, pos = pos_true, 
                            node_color = colors[0], 
-                           node_size = 200,
+                           node_size = 100,
                            ax = ax,
                            alpha = 1.0)
     
@@ -640,7 +644,7 @@ def ax_plot_true_net(ax, G_true, pos_true, probed_node = 0,
                                ax = ax,
                                nodelist=[probed_node],
                                node_color = colors[3], 
-                               node_size = 200,
+                               node_size = 100,
                                alpha = 1.0)
         
     nx.draw_networkx_edges(G_true, pos = pos_true, 
@@ -671,17 +675,17 @@ def ax_plot_ring_graph(ax, plot_net_alone=False):
     None.
 
     '''
-    N = 16
+    N = 10
     G_true = nx.cycle_graph(N, create_using=nx.Graph())
     pos_true = nx.circular_layout(G_true)
     nx.draw_networkx_nodes(G_true, pos = pos_true,
                            ax = ax, node_color = colors[3], 
                            linewidths= 1.0,
-                           node_size = 250,
+                           node_size = 150,
                            alpha = 1.0)
     nx.draw_networkx_nodes(G_true, pos = pos_true,
                            node_color = colors[0], 
-                           node_size = 200,
+                           node_size = 100,
                            ax = ax,
                            alpha = 1.0)
     
@@ -736,16 +740,21 @@ def plot_comparison_analysis(ax, exp_dictionary, net_name, plot_legend):
     avge_FN_comparison = FN_comparison.mean(axis = 0)    
     std_FN_comparison = FN_comparison.std(axis = 0)    
     
+    ind_start = np.where(avge_FN_comparison[0, :] == 0)[0][0]
+        
+    lab_opto.plot_false_proportion(ax, lgth_vector[ind_start:], 
+                                   avge_FP_comparison[:, ind_start:], 
+                                   std_FP_comparison[:, ind_start:], 
+                                   True, 
+                                   plot_legend)
     
-    
-    lab_opto.plot_false_proportion(ax, lgth_vector, avge_FP_comparison, std_FP_comparison, True, plot_legend)
     ax.set_ylabel(r'FP')
     plt.setp(ax.get_xticklabels(), visible=True)
-    '''
-    lab_opto.plot_false_proportion(ax, lgth_vector, avge_FN_comparison, std_FN_comparison, True, True)
-    ax.set_ylabel(r'FN')
-    '''
-    ax.set_xlabel(r'$n$')
+    
+    #lab_opto.plot_false_proportion(ax, lgth_vector, avge_FN_comparison, std_FN_comparison, True, True)
+    #ax.set_ylabel(r'FN')
+    
+    ax.set_xlabel(r'length of time series $n$')
     
 def plot_comparison_n_critical(ax, exp_dictionary, plot_legend):    
     '''
@@ -853,7 +862,8 @@ def plot_lgth_dependence(net_name, exps_dictionary, title, filename = None):
         
     return     
 
-def plot_n_c_size(exps_dictionary, title, filename = None):    
+def plot_n_c_size(exps_dictionary, title, net_info, fig_ = None, filename = None,
+                  plot_legend_global = True):    
     '''
     Plot the n_c vs N.
 
@@ -871,14 +881,13 @@ def plot_n_c_size(exps_dictionary, title, filename = None):
     None.
 
     '''
-    net_info = dict()
-    net_info['net_class'] = 'ring_graph'
     
     keys = list(exps_dictionary.keys())
     n_cols = int(len(keys))
     
-    fig_ = plt.figure(figsize = (6, 3), dpi = 300)
-    subfigs = fig_.subfigures(1, 2, width_ratios = [0.9, 1.1])
+    if fig_ == None:
+        fig_ = plt.figure(figsize = (6, 3), dpi = 300)
+    subfigs = fig_.subfigures(1, 2, width_ratios = [0.8, 1.0])
     
     fig = subfigs[0]
     
@@ -886,10 +895,17 @@ def plot_n_c_size(exps_dictionary, title, filename = None):
     
     ax_0 = fig.add_subplot(gs[0])
     
-    ax_plot_ring_graph(ax_0)
+    G_true, pos_true = net_info['G'], net_info['pos']
+        
+    ax_plot_true_net(ax_0, G_true, pos_true, probed_node = 0, 
+                     print_probed = False, plot_net_alone = False)
     
-    fig.suptitle(r'a) Original Network') 
-    plot_legend = True
+    fig.suptitle(title[0], x = 0.45) 
+    
+    if plot_legend_global:
+        plot_legend = True
+    else:
+        plot_legend = False
     for id_col in range(n_cols):
         fig1 = subfigs[id_col+1]
         
@@ -901,16 +917,17 @@ def plot_n_c_size(exps_dictionary, title, filename = None):
         plot_comparison_n_critical(ax1, exp_dictionary, plot_legend)
         if plot_legend:
             plot_legend = False
-        fig1.suptitle(title[id_col])
+        fig1.suptitle(title[1], x = 0.05)
     
     fig_.suptitle('fig')
-    if filename == None:
-        plt.show()
-    else:
-     
-        plt.savefig(filename+".pdf", format='pdf', bbox_inches='tight')
-        
-    return     
+
+    if fig_ == None:
+        if filename == None:
+            plt.show()
+        else:
+            plt.savefig(filename+".pdf", format='pdf', bbox_inches='tight')
+    else:            
+        return fig_
 
 def fig_1_plot(exps, net_info, titles, filename = None):
     '''
@@ -1138,13 +1155,13 @@ def n_c_plot_script(Nseeds = 10):
 
     '''
     title = [r'b) deg 3']
-    exps_name = ['gnet_deg_3_3_99_deg_1']#['lattice_neighs_3_deg_3_x_2']#['growing_net_deg_3_3_99_0_001_N']
+    exps_name = ['lattice_neighs_3_deg_3_x_2']#['gnet_deg_3_3_99']#['growing_net_deg_3_3_99_0_001_N']
     size_endpoints = [[10, 555, 55]]#[[3, 51, 5]]
     exps_dictionary = exp_setting_n_c(exps_name, size_endpoints, 
-                                             net_class = 'ring_graph',
+                                             net_class = 'lattice_neighs_3',
                                              Nseeds = Nseeds)
     
-    plot_n_c_size(exps_dictionary, title, filename = None)
+    plot_n_c_size(exps_dictionary, title, fig_ = None, filename = None)
     return exps_dictionary
     
 def ring_graph_script(rs):
@@ -1215,6 +1232,76 @@ def fig_1_setup(Nseeds = 10, filename = None):
    
     return exps
 
+def diff_nets_n_c_plot(Nseeds = 10, filename = None):
+    '''
+    Script to plot for different network structures 
+    the experiment of determining the critical length 
+    of time series as the size of the network is increased.
+
+    Parameters
+    ----------
+    Nseeds : int, optional
+        Total number of seeds of the random pseudo-generator. The default is 10.
+
+    Returns
+    -------
+    exps_dictionary : dict
+        Experiment dictionary with information gathered from the hdf5 file.
+
+    '''
+    
+    fig_ = plt.figure(figsize = (5, 7), dpi = 300)
+    subfigs = fig_.subfigures(3, 1)
+    #=========================================================================#
+    title = [r'a) $ \Delta = 2$', r'b)']
+    exps_name = ['gnet_deg_3_3_99_deg_1']
+    size_endpoints = [[10, 555, 55]]
+    exps_dictionary = exp_setting_n_c(exps_name, size_endpoints, 
+                                             net_class = 'ring_graph',
+                                             Nseeds = Nseeds)
+    
+    net_info = dict()
+    net_info['G'] = tools.ring_graph(10)
+    net_info['pos'] = nx.circular_layout(net_info['G'])
+
+    plot_n_c_size(exps_dictionary, title, net_info, fig_ = subfigs[0], 
+                  filename = None, plot_legend_global = True)
+    
+    #=========================================================================#
+    title = [r'c) $  \Delta = 6$', r'd)']
+    exps_name = ['lattice_neighs_3_deg_3_x_2']
+    size_endpoints = [[10, 555, 55]]
+    exps_dictionary = exp_setting_n_c(exps_name, size_endpoints, 
+                                             net_class = 'lattice_neighs_3',
+                                             Nseeds = Nseeds)
+    
+    net_info = dict()
+    net_info['G'] = tools.make_ring_lattice(10)
+    net_info['pos'] = nx.circular_layout(net_info['G'])
+    
+    plot_n_c_size(exps_dictionary, title, net_info, fig_ = subfigs[1], 
+                  filename = None, plot_legend_global = False)
+    #=========================================================================#
+    title = [r'e) $ \Delta = N$', r'f)']
+    exps_name = ['gnet_deg_3_3_99']
+    size_endpoints = [[10, 555, 55]]
+    exps_dictionary = exp_setting_n_c(exps_name, size_endpoints, 
+                                             net_class = 'star_graph',
+                                             Nseeds = Nseeds)
+    
+    net_info = dict()
+    net_info['G'] = tools.star_graph(10)
+    net_info['pos'] = nx.spring_layout(net_info['G'])
+    
+    plot_n_c_size(exps_dictionary, title, net_info, fig_ = subfigs[2], 
+                  filename = None, plot_legend_global = False)
+    #=========================================================================#
+    if filename == None:
+        plt.show()
+    else:
+        plt.savefig(filename+".pdf", format='pdf', bbox_inches='tight')
+        
+    return
 
 def test_rgraph(rs):
     exp_name = 'test_rgraph'
@@ -1226,9 +1313,11 @@ def test_rgraph(rs):
     return exp_dictionary
 
 def test_script(rs):
-    exp_name = 'test_ring_2'
-    net_class = 'ring_graph'
-    size_endpoints = [10, 1001, 100]
+    exp_name = 'test_lattice'
+    net_info = dict()
+    net_info['net_class'] = 'lattice_neighs_3'
+    net_info['gen'] = tools.make_ring_lattice
+    size_endpoints = [10, 555, 55]
     id_trial = None #np.array([0])
     exp_dictionary = compare_setup_critical_n(exp_name, net_info, size_endpoints, 
                              id_trial, random_seed = rs, 

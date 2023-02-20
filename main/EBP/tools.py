@@ -41,13 +41,21 @@ plt.rc('text', usetex=True)
 #========================================================#
 #Network structure
 #========================================================#
-def ring_graph(N, filename):
+def ring_graph(N, filename = None):
     G = nx.cycle_graph(N, create_using=nx.Graph())
-    nx.write_edgelist(G, filename+".txt", data=False)
+    
+    if filename != None:
+        nx.write_edgelist(G, filename+".txt", data=False)
+    
+    return G 
 
-def star_graph(N, filename):
+def star_graph(N, filename = None):
     G = nx.star_graph(N, create_using=nx.Graph())
-    nx.write_edgelist(G, filename+".txt", data=False)
+    
+    if filename != None:
+        nx.write_edgelist(G, filename+".txt", data=False)
+    
+    return G 
 
 def adjacent_edges(nodes, halfk): 
     N = len(nodes) 
@@ -56,12 +64,15 @@ def adjacent_edges(nodes, halfk):
             v = nodes[j % N]
             yield u, v
             
-def make_ring_lattice(N, filename, k = 3): 
+def make_ring_lattice(N, filename = None, k = 3): 
     G = nx.Graph() 
     nodes = range(N) 
     G.add_nodes_from(nodes) 
     G.add_edges_from(adjacent_edges(nodes, k)) 
-    nx.write_edgelist(G, filename+".txt", data=False)
+    
+    if filename != None:
+        nx.write_edgelist(G, filename+".txt", data=False)
+
     return G
 
 def random_toy_net_model(random_seed = 1, 
