@@ -963,7 +963,7 @@ def fig_1_plot(exps, net_info, titles, filename = None):
     #===========================================#
     
     ax_1 = fig.add_subplot(gs[1])
-    plot_comparison_analysis(ax_1, exps['lgth'][0], net_info['net_name'], False)
+    plot_comparison_analysis(ax_1, exps['lgth'][0], net_info['net_name'], True)
     ax_1.set_title(titles['lgth'][0])
     
     #===========================================#
@@ -971,7 +971,7 @@ def fig_1_plot(exps, net_info, titles, filename = None):
     keys = list(exps['n_c'].keys())
     n_cols = int(len(keys))
 
-    plot_legend = True
+    plot_legend = False
     delta = [10, 80]
     slope = [20, 20]
     for id_col in range(n_cols):
@@ -986,9 +986,6 @@ def fig_1_plot(exps, net_info, titles, filename = None):
         N_vector = np.arange(size_endpoints[0] + delta[id_col], size_endpoints[1] - delta[id_col], 0.1)
         ax1.plot(N_vector, slope[id_col]*np.log(N_vector), 'k--', lw = 1)
         
-        
-        if plot_legend:
-            plot_legend = False
         ax1.set_title(titles['n_c'][id_col])
     
     gs.tight_layout(fig)
