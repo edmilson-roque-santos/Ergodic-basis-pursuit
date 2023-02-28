@@ -1,0 +1,8 @@
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Roque dos Santos
+    given-names: Edmilson
+    orcid: https://orcid.org/1234-5678-9101-1121
+title: Ergodic Basis Pursuit
+version: 1.0
+date-released: 2022-07-05
