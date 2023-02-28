@@ -1,8 +1,29 @@
-message: "If you use this software, please cite it as below."
-authors:
-  - family-names: Roque dos Santos
-    given-names: Edmilson
-    orcid: https://orcid.org/1234-5678-9101-1121
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
 title: Ergodic Basis Pursuit
-version: 1.0
-date-released: 2022-07-05
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Roque dos Santos
+    family-names: Edmilson
+    email: edmilson.roque.usp@gmail.com
+    affiliation: University of São Paulo
+    orcid: 'https://orcid.org/0000-0002-1901-8273'
+repository-code: >-
+  https://github.com/edmilson-roque-santos/Ergodic-basis-pursuit
+abstract: >-
+  Ergodic basis pursuit is a sparse recovery method that
+  uses the statistical properties of the network dynamics to
+  reconstruct sparse networks.
+keywords:
+  - Compressive Sensing
+  - Network Dynamics
+  - Chaotic dynamics
+  - Sparse Networks
+license: MIT
+version: '1.0'
+date-released: '2023-02-27'
