@@ -20,8 +20,8 @@ from sympy.parsing.sympy_parser import parse_expr
 import h5py
 
 # Set plotting parameters
-params_plot = {'axes.labelsize': 18,
-              'axes.titlesize': 18,
+params_plot = {'axes.labelsize': 15,
+              'axes.titlesize': 15,
               'axes.linewidth': 1.0,
               'axes.xmargin':0, 
               'axes.ymargin': 0,
@@ -29,7 +29,7 @@ params_plot = {'axes.labelsize': 18,
               'xtick.labelsize': 16,
               'ytick.labelsize': 16,
               'figure.figsize': (8, 6),
-              'figure.titlesize': 20,
+              'figure.titlesize': 18,
               'font.serif': 'Computer Modern Serif',
               'mathtext.fontset': 'cm',
               'axes.linewidth': 1.0

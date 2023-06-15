@@ -318,7 +318,7 @@ def plot_kernel_density(ax, X_time_series, args):
                   label="{}".format(index),
                   color = col[index])
 
-    ax.set_ylabel(r'$\hat{\nu}(y)$')
+    ax.set_ylabel(r'$\rho(y)$')
         
     ax.set_xlabel(r'$y$')
     ax.set_xlim(lower_bound, upper_bound)
@@ -357,7 +357,7 @@ def plot_clusterize_density(ax, X_time_series, cluster_list):
     
     num_clusters = len(cluster_list)
     col_cluster = ['darkblue', 'brown']
-    legend_ = [r' $\rho^1$ : Nodes 1 to 5', r'$\rho^2$ : Nodes 6 to 17']
+    legend_ = [r' $\rho_1$ : Nodes 1 to 5', r'$\rho_2$ : Nodes 6 to 17']
     nodelist = np.arange(0, N, dtype = int)
     
     for id_cluster in range(num_clusters):
@@ -435,7 +435,7 @@ def plot_panel_pipeline(X_time_series, args):
     ax_4 = fig.add_subplot(gs[:, 2])
     plot_clusterize_density(ax_4, data, args['clusters_list'])
     ax_4.set_title(args['title'][2])
-    ax_4.set_ylabel(r'$\hat{\nu}(y)$', fontsize = 15)
+    ax_4.set_ylabel(r'$\rho(y)$', fontsize = 15)
     ax_4.set_xlabel(r'$y$', fontsize = 15)
     ax_4.legend(loc = 0, ncol=5, fontsize = 12)
     
@@ -505,6 +505,8 @@ def plot_subset_clustering(X_time_series, args):
 def plot_subset_selection(outfolder = 'Figures', filename = 'default',
                           plot_pipeline = False):  
     '''
+    OUTDATED! USE fig_3_script!!!
+    
     Generate plot involving data selection subset and clustering of density functions.    
 
     Parameters
@@ -522,7 +524,7 @@ def plot_subset_selection(outfolder = 'Figures', filename = 'default',
     None.
 
     '''      
-    folder = "data"+"/"+"opto_electronic_data"+"/"+"symmetric_data"+"/"
+    folder = "data"+"/"+"opto_electronic_data"+"/"+"symmetric_data"
     coupling_vec = np.arange(0.0156250, 1.093750 + 0.015625, 0.0156250)
     float_formatter = "{:.6f}".format
     
@@ -537,11 +539,11 @@ def plot_subset_selection(outfolder = 'Figures', filename = 'default',
     for id_sig in range(10, 11):
         print(coupling_vec[id_sig])
         X_time_series_data = np.loadtxt(folder+"N_symm_data_sigma = {}.txt".format(float_formatter(coupling_vec[id_sig]))) 
-        if filename == None:
-            args['filename'] = filename
         if filename == 'default':
             args['filename'] = outfolder+"/"+'Data_selection_{}'.format(float_formatter(coupling_vec[id_sig])) #None
-        
+        else:
+            args['filename'] = outfolder+"/"+filename
+            
         if plot_pipeline:
             plot_panel_pipeline(X_time_series_data, args)
         else:
@@ -999,7 +1001,7 @@ def ax_false_proportion(ax, info_x_eps):
     
     ax.set_ylim(0.0, 1.0)
     ax.set_xlabel(r'$\epsilon$',fontsize = 25)
-    ax.legend(loc=0)
+    ax.legend(loc=0, fontsize = 16)
     
 
     return
@@ -1200,7 +1202,7 @@ def plot_B_eps(gr_alg, node, threshold, id_cluster = 0, filename = None):
     threshold_noise = eps/np.sqrt(gr_alg['PHI'].shape[1])
     ax_probed_node_links(ax3[2], info_dict, node,  x_eps, eps, threshold_noise)
     
-    fig1.suptitle(r'a) $\mathcal{B}_{\varepsilon}$ relaxing path')
+    fig1.suptitle(r'a) Relaxing path')
 
     #======================================================#
     #======================================================#
