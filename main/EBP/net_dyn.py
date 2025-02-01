@@ -317,8 +317,7 @@ def spy_gen_net_dyn(args):
 
 def get_true_coeff_net_dyn(net_dynamics_dict, params):
     '''
-    Obtain the true coefficient matrix for the network dynamics splitting
-    into numerator and denominator.
+    Obtain the true coefficient matrix for the network dynamics.
 
     Parameters
     ----------
@@ -326,10 +325,7 @@ def get_true_coeff_net_dyn(net_dynamics_dict, params):
         
     Returns
     -------
-    c_matrix_num : numpy array
-        Coefficient matrix corresponding to the numerator.
-    c_matrix_den : numpy array
-        Coefficient matrix corresponding to the denominator.
+    c_matrix_true
     '''
     
     F = spy_gen_net_dyn(net_dynamics_dict)
@@ -347,7 +343,22 @@ def get_true_coeff_net_dyn(net_dynamics_dict, params):
     return c_matrix_true
 
 def noise_generation(params, generate_overall = True):
-    
+    '''
+    Generates a measurement perturbation matrix of size n x N.
+
+    Parameters
+    ----------
+    params : dict
+        
+    generate_overall : boolean, optional
+        Condition for overall perturbation or produced by microscopic statistics. The default is True.
+
+    Returns
+    -------
+    random_vector : TYPE
+        DESCRIPTION.
+
+    '''
     
     n = params['length_of_time_series']
     N = params['number_of_vertices']

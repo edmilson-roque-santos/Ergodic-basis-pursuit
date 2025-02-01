@@ -13,7 +13,10 @@ from matplotlib.gridspec import GridSpec
 import networkx as nx 
 import numpy as np
 import os
+from scipy.linalg import norm
+import seaborn as sns
 import sympy as spy
+
 
 from EBP import net_dyn, tools
 from EBP.base_polynomial import pre_settings as pre_set 
@@ -627,6 +630,8 @@ def compare_setup_noisy(exp_name, net_name,
         filename.
     net_name : str
         Network structure filename.
+    noise_magnitude : float
+        Noise magnitude of the perturbation.
     lgth_endpoints : list
         Start, end and space for length time vector.
     random_seed : int
@@ -816,6 +821,66 @@ def compare_basis_net_size(exp_dictionary):
             
     return size_vector, n_critical_comparison
 
+def compare_l2_error(exp_dictionary, noise_magnitude):
+    
+    exp_vec = list(exp_dictionary['exp_params'].keys())
+    lgth_endpoints = exp_dictionary['lgth_endpoints']
+    
+    lgth_vector = np.arange(lgth_endpoints[0], lgth_endpoints[1],
+                                      lgth_endpoints[2], dtype = int)
+    
+    
+    L, N = exp_dictionary[exp_vec[0]][lgth_vector[0]]['c_matrix_true'].shape
+    
+    ave_l2_error_comparison = np.zeros((lgth_vector.shape[0], N))
+    std_l2_error_comparison = np.zeros((lgth_vector.shape[0], N))
+
+    for id_key in range(len(lgth_vector)):    
+        key = lgth_vector[id_key]
+        l2_error_comparison = np.zeros((len(exp_vec), N))
+        for id_seed in range(len(exp_vec)):
+            c_matrix_true = exp_dictionary[exp_vec[id_seed]][key]['c_matrix_true']
+            x_eps_matrix = exp_dictionary[exp_vec[id_seed]][key]['x_eps_matrix']
+            
+            l2_error_comparison[id_seed, :] = norm(c_matrix_true - x_eps_matrix, axis = 0)
+            
+        ave_l2_error_comparison[id_key, :] = l2_error_comparison.mean(axis = 0)
+        std_l2_error_comparison[id_key, :] = l2_error_comparison.std(axis = 0)
+            
+    return lgth_vector, ave_l2_error_comparison, std_l2_error_comparison
+
+
+def plot_l2_error(exp_dictionary, noise_magnitude):
+     
+    
+    lgth_vector, ave_l2_error_comparison, std_l2_error_comparison = compare_l2_error(exp_dictionary, noise_magnitude)
+    
+    list_colors = sns.color_palette("mako_r", n_colors = ave_l2_error_comparison.shape[1])
+    
+    fig, ax = plt.subplots(figsize = (6, 3), dpi = 300)
+    
+    for id_node in range(ave_l2_error_comparison.shape[1]):
+        
+        ax.plot(lgth_vector,
+                ave_l2_error_comparison[:, id_node],
+                '-o',
+                color = list_colors[id_node],
+                alpha = 0.8)
+    
+    ax.hlines(noise_magnitude, lgth_vector[0], lgth_vector[-1],
+              linestyles='dashed',
+              colors='tab:gray')
+    
+    ax.set_ylim(1e-4,5e1)
+    ax.set_yscale('log')
+    
+    ax.set_xlim(lgth_vector[0]-2, lgth_vector[-1] + 10)
+    ax.set_title(r'Noise magnitude $\epsilon = {}$'.format(noise_magnitude))
+    ax.set_xlabel(r'length of time series $n$')
+    ax.set_ylabel(r'Count - $\|c^{}(\epsilon) - c\|_2$'.format('{\star}'))
+    
+    
+    
 def ax_plot_true_net(ax, G_true, pos_true, probed_node = 0, 
                      print_probed = True, plot_net_alone = False):
     '''
@@ -1351,7 +1416,8 @@ def ring_graph_lgth_script(rs):
 
 def ring_graph_noisy_lgth_script(noise_magnitude, rs):
     '''
-    Script to generate an experiment of varying length of time series and
+    Script to generate an experiment of varying length of time series for
+    a given noise magnitude and
     obtaining the network reconstruction.
 
     Parameters
@@ -1366,7 +1432,7 @@ def ring_graph_noisy_lgth_script(noise_magnitude, rs):
     '''
     exp_name = 'logc_lgth_3_99_0_001_noisy_{}'.format(noise_magnitude)
     net_name = 'ring_graph_N=16'
-    lgth_endpoints = [10, 210, 25]
+    lgth_endpoints = [10, 211, 10]
     exp_dictionary = compare_setup_noisy(exp_name, net_name, 
                                         noise_magnitude,
                                         lgth_endpoints, 
