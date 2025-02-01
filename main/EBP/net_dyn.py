@@ -8,7 +8,11 @@ Created on --- 2020
 
 import numpy as np
 from numpy.random import default_rng
+from scipy.linalg import norm
 import sympy as spy
+
+from .base_polynomial import poly_library as polb
+
 
 def net_dynamics(x, args):
     '''
@@ -261,3 +265,144 @@ def generate_net_dyn_model(y_0, coefficient_matrix, time_length, params):
     
     if full_time_length:                   
         return Z
+
+
+def spy_gen_net_dyn(args):
+    '''
+    Symbolic network dynamics map.
+
+    Parameters
+    ----------
+    args : dict
+        Dictionary with network dynamics information content.
+        Keys: 
+            'adj_matrix' : numpy array
+                Adjacency matrix 
+            'coupling' : float
+                coupling strength
+            'max_degree' : int
+                maximum degree of the network
+            'f' : sympy Matrix
+                symbolic isolated map
+            'h' : sympy Matrix
+                symbolic coupling function
+
+    Returns
+    -------
+    F : sympy Matrix
+        Symbolic network dynamics.
+
+    '''
+    A = args['adj_matrix']
+    
+    N = A.shape[0] #Number of vertices
+    
+    x_t = [spy.symbols('x_{}'.format(j)) for j in range(0, N)]
+    
+    Lambda = args['coupling']
+    max_degree = args['max_degree']
+    f_isolated = args['f']
+    h_coupling = args['h_dict']
+    cplg = args['h_dict'](spy.Matrix(x_t))
+    
+    f = spy.zeros(N, 1)
+    
+    for id_node in range(N):
+        f[id_node] = f_isolated(x_t[id_node])
+        
+    F = f + cplg*Lambda/(max_degree)
+    
+    return F
+
+
+def get_true_coeff_net_dyn(net_dynamics_dict, params):
+    '''
+    Obtain the true coefficient matrix for the network dynamics splitting
+    into numerator and denominator.
+
+    Parameters
+    ----------
+    params : dict
+        
+    Returns
+    -------
+    c_matrix_num : numpy array
+        Coefficient matrix corresponding to the numerator.
+    c_matrix_den : numpy array
+        Coefficient matrix corresponding to the denominator.
+    '''
+    
+    F = spy_gen_net_dyn(net_dynamics_dict)
+    
+    dict_can_bf = polb.dict_canonical_basis(params)
+
+    L, N = params['L'], params['number_of_vertices']
+    
+    c_matrix_true = np.zeros((L, N))        
+    
+    for id_node in range(N):
+        c_matrix_true[:, id_node] = polb.get_coeff_matrix_wrt_basis(F[id_node].expand(), 
+                                                                    dict_can_bf)
+        
+    return c_matrix_true
+
+def noise_generation(params, generate_overall = True):
+    
+    
+    n = params['length_of_time_series']
+    N = params['number_of_vertices']
+    
+    random_seed = params['random_seed']
+    rng = default_rng(random_seed)  #Initializes an instance of the pseudo random generator;
+    
+    
+    if generate_overall:
+    
+        random_vector = rng.uniform(-1, 1, size = (n, N))
+        random_vector = params['noise_magnitude']*random_vector/norm(random_vector, axis = 0)
+        
+        return random_vector
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    

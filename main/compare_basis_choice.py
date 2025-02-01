@@ -13,6 +13,7 @@ from matplotlib.gridspec import GridSpec
 import networkx as nx 
 import numpy as np
 import os
+import sympy as spy
 
 from EBP import net_dyn, tools
 from EBP.base_polynomial import pre_settings as pre_set 
@@ -183,6 +184,8 @@ def compare_script(script_dict):
     
     return net_dict
 
+
+    
 def save_dict(dictionary, out_dict):
     '''
     Save dictionary in the output dictionary and avoids some keys that are not
@@ -485,6 +488,216 @@ def compare_setup_critical_n(exp_name, net_info, size_endpoints, id_trial,
         out_results_hdf5.close()
         return exp_dictionary
     
+#=============================================================================#
+#For a fixed noise magnitude value, simulate 
+#increasing the length of time series such that
+#the reconstruction is successed. 
+#=============================================================================#
+def compare_script_noisy(script_dict):
+    '''
+    Script for the reconstruction of coupled Logistic maps under noisy measurements. 
+
+    Parameters
+    ----------
+    script_dict : dict
+    Dictionary with specifier of the comparison script
+    Keys:
+        opt_list : list of boolean
+            Each entry determines which basis is selected. 
+            Order: #canonical, normalize_cols, orthonormal
+        lgth_time_series : float
+            Length of time series.
+        exp_name : str
+            Filename.
+        net_name: str
+            Network structure filename.
+        id_trial: numpy array 
+            Set of nodes to be reconstructed
+            
+    Returns
+    -------
+    dictionary result from net reconstruction algorithm.
+
+    '''
+    ############# Construct the parameters dictionary ##############
+    parameters = dict()
+    
+    parameters['exp_name'] = script_dict['exp_name']
+    parameters['Nseeds'] = 1
+    parameters['random_seed'] = script_dict.get('random_seed', 1)
+    parameters['network_name'] = script_dict['net_name']
+    parameters['max_deg_monomials'] = 3
+    parameters['expansion_crossed_terms'] = True#
+    
+    parameters['use_kernel'] = True
+    parameters['noisy_measurement'] = True
+    parameters['noise_magnitude'] = script_dict['noise_magnitude']
+    parameters['use_canonical'] = script_dict['opt_list'][0]
+    parameters['normalize_cols'] = script_dict['opt_list'][1]
+    parameters['use_orthonormal'] = script_dict['opt_list'][2]
+    parameters['length_of_time_series'] = script_dict['lgth_time_series']
+    
+    try:
+        G = script_dict['G']
+    except:
+        G = nx.read_edgelist("network_structure/{}.txt".format(parameters['network_name']),
+                            nodetype = int, create_using = nx.Graph)
+        
+    parameters['number_of_vertices'] = len(nx.nodes(G))
+    A = nx.to_numpy_array(G, nodelist = list(range(parameters['number_of_vertices'])))
+    A = np.asarray(A)
+    parameters['adj_matrix'] = A
+    parameters['coupling'] = 1e-3
+    #==========================================================#
+    net_dynamics_dict = dict()
+    net_dynamics_dict['adj_matrix'] = parameters['adj_matrix']
+    
+    r = 3.990
+    net_dynamics_dict['f'] = lambda x: r*x*(1 - x)
+    net_dynamics_dict['h'] = lambda x: (A.T @ x**2)#(x**1)*(A.T @ x**1)
+    net_dynamics_dict['h_dict'] = lambda x: spy.Matrix(A.T) @ x.applyfunc(lambda e: e**2)
+    net_dynamics_dict['max_degree'] = np.max(np.sum(A, axis=0))
+    net_dynamics_dict['coupling'] = parameters['coupling']#*net_dynamics_dict['max_degree']
+    net_dynamics_dict['random_seed'] = parameters['random_seed']
+    X_time_series = net_dyn.gen_net_dynamics(script_dict['lgth_time_series'], net_dynamics_dict) 
+    
+    
+    Z = net_dyn.noise_generation(parameters, generate_overall = script_dict['generate_overall'])
+    X_time_series = X_time_series + Z
+    #==========================================================#    
+    
+    net_dict = dict()
+
+    mask_bounds = (X_time_series < 0) | (X_time_series > 1) | (np.any(np.isnan(X_time_series)))
+    if np.any(mask_bounds):
+        raise ValueError("Network dynamics does not live in a compact set ")
+        
+    if not np.any(mask_bounds):
+
+        X_t = X_time_series[:script_dict['lgth_time_series'],:]
+        
+        parameters['lower_bound'] = np.min(X_t)
+        parameters['upper_bound'] = np.max(X_t)
+        
+        parameters['number_of_vertices'] = X_t.shape[1]
+        
+        parameters['X_time_series_data'] = X_t
+        
+        params = parameters.copy()
+        
+        if params['use_orthonormal']:
+            out_dir_ortho_folder = out_dir_ortho(script_dict['net_name'], 
+                                                 script_dict['exp_name'], params)
+            
+            output_orthnormfunc_filename = out_dir_ortho_folder
+        
+            if not os.path.isfile(output_orthnormfunc_filename):
+                params['orthnorm_func_filename'] = output_orthnormfunc_filename
+                params['orthnormfunc'] = pre_set.create_orthnormfunc_kde(params)    
+    
+            if os.path.isfile(output_orthnormfunc_filename):
+                params['orthnorm_func_filename'] = output_orthnormfunc_filename
+                      
+            params['build_from_reduced_basis'] = True
+        
+        params['cluster_list'] = [np.arange(0, params['number_of_vertices'], 1, dtype = int)]
+        params['threshold_connect'] = 1e-8
+        
+        if script_dict['id_trial'] != None:
+            params['id_trial'] = script_dict['id_trial']
+        
+        solver_optimization = cp.ECOS
+        
+        net_dict = net_reconstr.reconstr(X_t, params, solver_optimization)
+        net_dict['c_matrix_true'] = net_dyn.get_true_coeff_net_dyn(net_dynamics_dict, net_dict['info_x_eps']['params'])
+        
+    return net_dict
+
+
+def compare_setup_noisy(exp_name, net_name, 
+                        noise_magnitude,
+                        lgth_endpoints, 
+                        random_seed = 1, 
+                        save_full_info = False):
+    '''
+    
+    Parameters
+    ----------
+    exp_name : str
+        filename.
+    net_name : str
+        Network structure filename.
+    lgth_endpoints : list
+        Start, end and space for length time vector.
+    random_seed : int
+        Seed for the random pseudo-generator.
+    save_full_info : dict, optional
+        To save the library matrix. The default is False.
+
+    Returns
+    -------
+    exp_dictionary : TYPE
+        DESCRIPTION.
+
+    '''
+    exp_params = dict()
+    #orthonormal
+    exp_params[1] = [False, False, True]
+    
+    length_time_series_vector = np.arange(lgth_endpoints[0], lgth_endpoints[1],
+                                          lgth_endpoints[2], dtype = int)
+    
+    #Filename for output results
+    out_results_direc = out_dir(net_name, exp_name)
+    filename = "lgth_endpoints_{}_{}_{}_seed_{}_noise_{}".format(lgth_endpoints[0], 
+                                                                 lgth_endpoints[1],
+                                                                 lgth_endpoints[2], 
+                                                                 random_seed,
+                                                                 noise_magnitude) 
+    
+    if os.path.isfile(out_results_direc+filename+".hdf5"):
+        out_results_hdf5 = h5dict.File(out_results_direc+filename+".hdf5", 'r')
+        exp_dictionary = out_results_hdf5.to_dict()  
+        out_results_hdf5.close()      
+        return exp_dictionary
+    
+    else:
+        out_results_hdf5 = h5dict.File(out_results_direc+filename+".hdf5", 'a')    
+        out_results_hdf5['lgth_endpoints'] = lgth_endpoints
+        out_results_hdf5['noise_magnitude'] = noise_magnitude
+        out_results_hdf5['exp_params'] = dict() 
+        out_results_hdf5['exp_params'] = exp_params
+        
+        for key in exp_params.keys():    
+            out_results_hdf5[key] = dict()
+            for lgth_time_series in length_time_series_vector:
+                print('exp:', key, 'n = ', lgth_time_series)
+                
+                script_dict = dict()
+                script_dict['opt_list'] = exp_params[key]
+                script_dict['lgth_time_series'] = lgth_time_series
+                script_dict['noise_magnitude'] = noise_magnitude
+                script_dict['generate_overall'] = True
+                script_dict['exp_name'] = exp_name
+                script_dict['net_name'] = net_name
+                script_dict['id_trial'] = None
+                script_dict['random_seed'] = random_seed
+                
+                
+                net_dict = compare_script_noisy(script_dict)
+                out_results_hdf5[key][lgth_time_series] = dict()
+                out_results_hdf5[key][lgth_time_series]['c_matrix_true'] = net_dict['c_matrix_true']
+                out_results_hdf5[key][lgth_time_series]['x_eps_matrix'] = net_dict['x_eps_matrix']
+                if save_full_info:
+                    out_results_hdf5[key][lgth_time_series]['PHI.T PHI'] = net_dict['PHI.T PHI']
+                    out_results_hdf5[key][lgth_time_series]['params'] = dict()
+                    save_dict(net_dict['params'], out_results_hdf5[key][lgth_time_series]['params'])            
+                
+                
+        exp_dictionary = out_results_hdf5.to_dict()        
+        out_results_hdf5.close()
+        return exp_dictionary
+
 #=============================================================================#
 #Lab Analysis
 #=============================================================================#
@@ -1134,6 +1347,33 @@ def ring_graph_lgth_script(rs):
     lgth_endpoints = [10, 510, 12]
     compare_setup(exp_name, net_name, lgth_endpoints, random_seed = rs, 
                       save_full_info = False)
+
+
+def ring_graph_noisy_lgth_script(noise_magnitude, rs):
+    '''
+    Script to generate an experiment of varying length of time series and
+    obtaining the network reconstruction.
+
+    Parameters
+    ----------
+    rs : int
+        Int for the seed of the random pseudo-generator.
+
+    Returns
+    -------
+    None.
+
+    '''
+    exp_name = 'logc_lgth_3_99_0_001_noisy_{}'.format(noise_magnitude)
+    net_name = 'ring_graph_N=16'
+    lgth_endpoints = [10, 210, 25]
+    exp_dictionary = compare_setup_noisy(exp_name, net_name, 
+                                        noise_magnitude,
+                                        lgth_endpoints, 
+                                        random_seed = rs, 
+                                        save_full_info = False)
+
+    return exp_dictionary
 
 def n_c_plot_script(Nseeds = 10):
     '''
