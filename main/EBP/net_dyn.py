@@ -374,6 +374,12 @@ def noise_generation(params, generate_overall = True):
         
         return random_vector
     
+    else:
+    
+        random_vector = rng.uniform(-1, 1, size = (n, N))
+        random_vector = params['perturbation_noise']*random_vector
+        
+        return random_vector
     
     
     
