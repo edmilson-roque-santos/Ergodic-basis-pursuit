@@ -130,8 +130,13 @@ def reconstr(X_t_, params, solver_optimization = solver_default):
         if params_['use_canonical']:
             x_eps_can = x_eps.copy()                    
         if params_['use_orthonormal']:
-            x_eps_can = R @ x_eps
-              
+            compute_in_canonical = False
+            #Compute the reconstructed vector in the canonical basis
+            if compute_in_canonical:
+                x_eps_can = R @ x_eps
+            else:
+                x_eps_can = x_eps
+                
         x_eps_dict[id_node] = x_eps_can
         if completing_on:
             x_eps_matrix = gnr_alg.completing_coeff_matrix(id_node, x_eps_can, 
