@@ -564,18 +564,19 @@ def compare_script_noisy(script_dict):
     net_dynamics_dict['random_seed'] = parameters['random_seed']
     X_time_series = net_dyn.gen_net_dynamics(script_dict['lgth_time_series'], net_dynamics_dict) 
     
-    parameters['perturbation_noise'] = 1e-5
+    
+    mask_bounds = (X_time_series < 0) | (X_time_series > 1) | (np.any(np.isnan(X_time_series)))
+    if np.any(mask_bounds):
+        raise ValueError("Network dynamics does not live in a compact set ")
+    
+    parameters['perturbation_noise'] = 1e-2
     Z = net_dyn.noise_generation(parameters, 
                                  generate_overall = script_dict['generate_overall'])
     X_time_series = X_time_series + Z
     #==========================================================#    
     
     net_dict = dict()
-
-    mask_bounds = (X_time_series < 0) | (X_time_series > 1) | (np.any(np.isnan(X_time_series)))
-    if np.any(mask_bounds):
-        raise ValueError("Network dynamics does not live in a compact set ")
-        
+    
     if not np.any(mask_bounds):
 
         X_t = X_time_series[:script_dict['lgth_time_series'],:]
@@ -619,8 +620,8 @@ def compare_script_noisy(script_dict):
         # magnitude of the vector perturbation. 
         net_dict['B'] = X_t[1:, :]
         R = net_dict['info_x_eps']['params']['R']
-        net_dict['c_matrix_true'] = (np.linalg.inv(R) @ net_dict['c_matrix_true'])
-        cnu = np.sqrt(net_dict['B'].shape[0])*net_dict['c_matrix_true']
+        net_dict['c_matrix_true_nu'] = (np.linalg.inv(R) @ net_dict['c_matrix_true'])
+        cnu = np.sqrt(net_dict['B'].shape[0])*net_dict['c_matrix_true_nu']
         Z_bar = net_dict['B'] - (net_dict['PHI'] @ cnu)
         net_dict['eps_magnitude'] = norm(Z_bar, axis = 0)
 
@@ -862,12 +863,13 @@ def compare_l2_error(exp_dictionary):
             for id_noise, noise in enumerate(noise_mag_vector):
                 c_matrix_true = exp_dictionary[seed][1][key][noise]['c_matrix_true']
                 x_eps_matrix = exp_dictionary[seed][1][key][noise]['x_eps_matrix']
+                noise_magnitude = exp_dictionary[seed][1][key][noise]['eps_magnitude']
                 
-                l2_error_comparison[id_noise] = norm(c_matrix_true - x_eps_matrix, axis = 0).mean()/noise
+                l2_error_comparison[id_noise] = norm(c_matrix_true - x_eps_matrix, axis = 0).mean()#/noise
                 
         ave_l2_error_comparison[id_seed, :] = l2_error_comparison
             
-    return lgth_vector, noise_mag_vector, ave_l2_error_comparison
+    return key, noise_magnitude.mean(), noise_mag_vector, ave_l2_error_comparison
 
 
 def plot_l2_error_vs_noise_mag(exp_dictionary, 
@@ -876,7 +878,8 @@ def plot_l2_error_vs_noise_mag(exp_dictionary,
                                             'marker':'o',
                                             'legend':r''}):
      
-    lgth_vector, noise_mag_vector, ave_l2_error_comparison = compare_l2_error(exp_dictionary)
+    
+    lgth, noise_magnitude, noise_mag_vector, ave_l2_error_comparison = compare_l2_error(exp_dictionary)
     
     mean, std = ave_l2_error_comparison.mean(axis = 0), ave_l2_error_comparison.std(axis = 0)
     
@@ -887,7 +890,7 @@ def plot_l2_error_vs_noise_mag(exp_dictionary,
     ax.plot(noise_mag_vector,
             mean,
             '-',
-            label = r'$n = {}$'.format(lgth_vector[0]),
+            label = r'$n = {}$'.format(lgth),
             color = plot_dict['color'],
             marker = plot_dict['marker'],
             alpha = 1.0)
@@ -898,17 +901,17 @@ def plot_l2_error_vs_noise_mag(exp_dictionary,
                     color = plot_dict['color'],
                     alpha = 0.4)    
 
-    #ax.hlines(1, noise_mag_vector[0], 
-    #          noise_mag_vector[-1],
-    #          linestyle = 'dashed', color = 'black')
+    ax.hlines(noise_magnitude, noise_mag_vector[0], 
+              noise_mag_vector[-1],
+              linestyle = 'dashed', color = 'black')
     
-    ax.vlines(1.6e-4, np.min(mean), 
+    ax.vlines(noise_magnitude, np.min(mean), 
               np.max(mean),
               linestyle = 'dashed', color = 'black')
     
     ax.legend(loc=0)
-    ax.set_xscale('log')
-    ax.set_yscale('log')
+    #ax.set_xscale('log')
+    #ax.set_yscale('log')
     ax.set_xlabel(r'Parameter $\epsilon$')
     ax.set_ylabel(r'$\langle \|c^{}(\epsilon) - c\|_2\rangle /\epsilon$'.format('{\star}'))
     
@@ -1539,16 +1542,23 @@ def ring_graph_noisy_lgth_script(rs):
     # This experiment normalizes the perturbation vector in the dynamics.
     # Let us analyze the effect if one does not normalize it.
     exp_name = 'logc_lgth_3_99_0_001_nsy_eps_1e-5'
-    '''
     
-    exp_name = 'logc_lgth_3_99_0_001_unnorm_nsy_eps_1e-5'
+    # This experiment does not normalize the perturbation vector in the dynamics.
+    However, the comparison with respect to the true vector is done on the canonical 
+    basis. 
+    'logc_lgth_3_99_0_001_unnorm_nsy_eps_1e-5'
+    
+    '''
+    #This experiment compares the reconstructed vector and true vector
+    #with respect to the orthonormal basis.
+    exp_name = 'logc_lgth_3_99_0_001_unnorm_eps_1e-5_orth_basis'
     
     net_name = 'ring_graph_N=16'
-    noise_mag_endpoints = [5e-5, 1e-3, 30]
+    noise_mag_endpoints = [5e-6, 1e-3, 30]
     #The first experiment (02/02/25) [100, 101, 10]
     #The second experiment (02/02/25) [50, 51, 10] 
     #The third experiment (02/02/25) [200, 201, 10] 
-    lgth_endpoints = [200, 201, 10]
+    lgth_endpoints = [50, 51, 10]
     exp_dictionary = compare_setup_noisy(exp_name, net_name, 
                                         noise_mag_endpoints,
                                         lgth_endpoints, 
@@ -1558,10 +1568,12 @@ def ring_graph_noisy_lgth_script(rs):
     return exp_dictionary
 
 def ring_graph_noisy_exp(Nseeds, lgth_endpoints):
+    # The description of each experiment is described in the method above: ring_graph_noisy_lgth_script
     #exp_name = 'logc_lgth_3_99_0_001_nsy_eps_1e-5'
-    exp_name = 'logc_lgth_3_99_0_001_unnorm_nsy_eps_1e-5'
+    #exp_name = 'logc_lgth_3_99_0_001_unnorm_nsy_eps_1e-5'
+    exp_name = 'logc_lgth_3_99_0_001_unnorm_eps_1e-5_orth_basis'
     net_name = 'ring_graph_N=16'
-    noise_mag_endpoints = [5e-5, 1e-3, 30]
+    noise_mag_endpoints = [5e-6, 1e-3, 30]
     
     exps = exp_setting_noisy(exp_name, 
                              noise_mag_endpoints,
@@ -1795,7 +1807,7 @@ def test_script(rs):
 
 
 def test_noisy_script(rs):
-    exp_name = 'compute_magnitude_eps'
+    exp_name = 'compute_magnitude_eps_1e-2'
     net_name = 'ring_graph_N=16'
     noise_mag_endpoints = [5e-5, 1e-3, 30]
     #The first experiment (02/02/25) [100, 101, 10]
@@ -1805,7 +1817,7 @@ def test_noisy_script(rs):
     script_dict = dict()
     script_dict['opt_list'] = [False, False, True]
     script_dict['lgth_time_series'] = 100
-    script_dict['noise_magnitude'] = 5e-5
+    script_dict['noise_magnitude'] = 2e-1
     script_dict['generate_overall'] = False
     script_dict['exp_name'] = exp_name
     script_dict['net_name'] = net_name
