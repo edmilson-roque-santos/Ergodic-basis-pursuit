@@ -29,7 +29,7 @@ def worker_function(inputs):
 
 ##### Randomness
 Nseeds = 10
-ps = range(2, Nseeds + 1) # Seed for random number generator
+ps = range(1, Nseeds + 1) # Seed for random number generator
 
 ti = time.time()    
 results = worker_function(ps)

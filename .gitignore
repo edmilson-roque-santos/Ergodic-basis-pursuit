@@ -4,3 +4,4 @@
 EBP/__pycache__/__init__.cpython-38.pyc
 __pycache__/lab_opto_electronic.cpython-38.pyc
 EBP/__pycache__/net_dyn.cpython-38.pyc
+main/results/ring_graph_N=16/log_unnorm_eps_1e-4_comparison_lgth_vary/noise_0.0001_0.01_30_lgth_p_10_301_10_seed_1.hdf5
