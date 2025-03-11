@@ -994,14 +994,18 @@ def ax_false_proportion(ax, info_x_eps):
             FP[eps_counter, node] = rel_error['FP']
     
     mean_FP = np.mean(FP, axis = 1)
-    ax.plot(noise_vec, mean_FP, '-o', label='FP', color=colors[1])
+    ax.plot(noise_vec, mean_FP, '-o', 
+            label=r'$\langle FP \rangle$', 
+            color=colors[1])
 
     mean_FN = np.mean(FN, axis = 1)    
-    ax.plot(noise_vec, mean_FN, '-o', label='FN', color=colors[2])
+    ax.plot(noise_vec, mean_FN, '-o', 
+            label=r'$\langle FN \rangle$', 
+            color=colors[2])
     
     ax.set_ylim(0.0, 1.0)
     ax.set_xlabel(r'$\epsilon$',fontsize = 25)
-    ax.legend(loc=0, fontsize = 16)
+    ax.legend(loc=0, fontsize = 14)
     
 
     return

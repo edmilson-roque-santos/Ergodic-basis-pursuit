@@ -108,7 +108,7 @@ def compare_script(script_dict):
     parameters['random_seed'] = script_dict.get('random_seed', 1)
     parameters['network_name'] = script_dict['net_name']
     parameters['max_deg_monomials'] = 3
-    parameters['expansion_crossed_terms'] = False#True#
+    parameters['expansion_crossed_terms'] = True#False#
     
     parameters['use_kernel'] = True
     parameters['noisy_measurement'] = False
@@ -134,7 +134,7 @@ def compare_script(script_dict):
     
     r = 3.990
     net_dynamics_dict['f'] = lambda x: r*x*(1 - x)
-    net_dynamics_dict['h'] = lambda x: (A.T @ x**2)#(x**1)*(A.T @ x**1)
+    net_dynamics_dict['h'] = lambda x: (x**1)*(A.T @ x**1)#(A.T @ x**2)
     net_dynamics_dict['max_degree'] = np.max(np.sum(A, axis=0))
     net_dynamics_dict['coupling'] = parameters['coupling']#*net_dynamics_dict['max_degree']
     net_dynamics_dict['random_seed'] = parameters['random_seed']
@@ -269,7 +269,7 @@ def compare_setup(exp_name, net_name, lgth_endpoints, random_seed = 1,
     #normalize_cols
     exp_params[0] = [True, True, False]
     #orthonormal
-    exp_params[1] = [False, False, True]
+    exp_params[1] = [False, True, True]
     
     length_time_series_vector = np.arange(lgth_endpoints[0], lgth_endpoints[1],
                                           lgth_endpoints[2], dtype = int)
@@ -673,7 +673,7 @@ def compare_setup_noisy(exp_name, net_name,
     #normalize_cols
     exp_params[0] = [True, True, False] 
     #orthonormal
-    exp_params[1] = [False, False, True]
+    exp_params[1] = [False, True, True]
     
     noise_mag_vector = np.geomspace(noise_mag_endpoints[0], noise_mag_endpoints[1],
                                    noise_mag_endpoints[2])
@@ -947,7 +947,7 @@ def plot_l2_error_vs_noise_mag(exp_dictionary,
 
     # Plot an inset with the results with the EBP in log-log scale    
     id_exp = 1
-    x1, x2, y1, y2 = 1e-3, 1e-2, 1e-6, 1e-3  # subregion of the original image
+    x1, x2, y1, y2 = 1e-4, 1e-2, 1e-6, 1e-4  # subregion of the original image
     axins = ax.inset_axes(
     [0.15, 0.6, 0.45, 0.35],
         xlim=(x1, x2), ylim=(y1, y2), xticklabels=[], yticklabels=[])
@@ -1745,7 +1745,7 @@ def ring_graph_lgth_script(rs):
     '''
     exp_name = 'logc_lgth_3_99_0_001'
     net_name = 'ring_graph_N=40'
-    lgth_endpoints = [10, 510, 12]
+    lgth_endpoints = [10, 510, 50]
     compare_setup(exp_name, net_name, lgth_endpoints, random_seed = rs, 
                       save_full_info = False)
 
@@ -1800,7 +1800,7 @@ def ring_graph_noisy_lgth_script(rs):
     
     exp_name = 'log_unnorm_eps_1e-4_comparison'
     net_name = 'ring_graph_N=16'
-    noise_mag_endpoints = [1e-3, 1e-2, 30]
+    noise_mag_endpoints = [1e-4, 1e-2, 30]
     
     lgth_endpoints = [200, 201, 10]
     exp_dictionary = compare_setup_noisy(exp_name, net_name, 
@@ -1818,7 +1818,7 @@ def ring_graph_noisy_exp(Nseeds, lgth_endpoints, one_experiment = False):
     #exp_name = 'logc_lgth_3_99_0_001_unnorm_nsy_eps_1e-5'
     #exp_name = 'logc_lgth_3_99_0_001_unnorm_eps_1e-5_orth_basis'
     net_name = 'ring_graph_N=16'
-    noise_mag_endpoints = [1e-3, 1e-2, 30]
+    noise_mag_endpoints = [1e-4, 1e-2, 30]
     
     if not one_experiment:
         exp_name = 'log_unnorm_eps_1e-4_comparison'    
