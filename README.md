@@ -1,6 +1,5 @@
 # Ergodic-basis-pursuit
 
- Ergodic basis pursuit is a sparse recovery method that uses the ergodicity of the network dynamics to reconstruct sparse networks.
  Ergodic Basis Pursuit method leverages the statistical properties of the network dynamics to accurately reconstruct sparse networks. Compared to traditional methods, the Ergodic Basis Pursuit reconstructs sparse networks using significantly less data and is robust to noise. 
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15007165.svg)](https://doi.org/10.5281/zenodo.15007165)
